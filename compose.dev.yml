@@ -1,0 +1,84 @@
+# Local development stack: H2 in-memory (Spring profiles = dev)
+# Project name is separate from staging so images/containers are not overwritten.
+name: bookshop-dev
+
+services:
+  auth-server:
+    image: bookshop-auth-server:dev
+    build:
+      context: ./auth-server
+      dockerfile: Dockerfile.dev
+    container_name: bookshop-auth-server-dev
+    ports:
+      - "${AUTH_SERVER_PORT:-9000}:9000"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      AUTH_SERVER_PORT: 9000
+      # Token iss must match what browsers and the resource server validate
+      AUTH_ISSUER_URI: ${AUTH_ISSUER_URI:-http://localhost:9000}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:4200}
+      OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-bookshop-spa}
+      OAUTH_AUDIENCE: ${OAUTH_AUDIENCE:-bookshop-api}
+    networks:
+      - bookshop-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  backend:
+    image: bookshop-backend:dev
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: bookshop-backend-dev
+    ports:
+      - "${BACKEND_PORT:-8090}:8090"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      BACKEND_PORT: 8090
+      AUTH_ISSUER_URI: ${AUTH_ISSUER_URI:-http://localhost:9000}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://auth-server:9000/oauth2/jwks
+      OAUTH_AUDIENCE: ${OAUTH_AUDIENCE:-bookshop-api}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:4200}
+    depends_on:
+      auth-server:
+        condition: service_healthy
+    networks:
+      - bookshop-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  frontend:
+    # ng serve listens on 4200 (Dockerfile.dev) — do not use the nginx staging image here
+    image: bookshop-frontend:dev
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: bookshop-frontend-dev
+    ports:
+      - "4200:4200"
+    environment:
+      AUTH_ISSUER_URI: ${AUTH_BROWSER_ISSUER_URI:-http://localhost:9000}
+      API_BASE_URL: ${API_BASE_URL:-http://localhost:8090}
+      OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-bookshop-spa}
+      OAUTH_AUDIENCE: ${OAUTH_AUDIENCE:-bookshop-api}
+      OAUTH_REDIRECT_URI: ${OAUTH_REDIRECT_URI:-http://localhost:4200/auth/callback}
+      OAUTH_SCOPES: ${OAUTH_SCOPES:-openid profile bookshop.read bookshop.write}
+    depends_on:
+      - backend
+    networks:
+      - bookshop-network
+    restart: unless-stopped
+
+networks:
+  bookshop-network:
+    driver: bridge

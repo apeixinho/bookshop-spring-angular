@@ -1,0 +1,29 @@
+# auth-server/Dockerfile.dev — development image (H2 / in-memory friendly)
+FROM eclipse-temurin:21-jdk-alpine AS build
+
+RUN apk update && apk upgrade && apk add --no-cache maven
+
+WORKDIR /opt/app
+
+COPY pom.xml .
+COPY src src
+
+RUN mvn package -DskipTests
+
+FROM eclipse-temurin:21-jre-alpine
+
+WORKDIR /opt/app
+
+RUN apk add --no-cache curl \
+    && addgroup --system javauser && adduser -S -s /usr/sbin/nologin -G javauser javauser
+
+COPY --from=build --chown=javauser:javauser /opt/app/target/*.jar app.jar
+
+USER javauser
+
+EXPOSE 9000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD curl -f http://localhost:9000/actuator/health || exit 1
+
+ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=dev"]

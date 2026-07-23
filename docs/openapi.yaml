@@ -1,0 +1,106 @@
+openapi: 3.0.3
+info:
+  title: Bookshop API
+  version: 1.0.0
+  description: Catalog is public; checkout requires Bearer JWT with scope bookshop.write.
+servers:
+  - url: http://localhost:8090
+paths:
+  /api/v1/products:
+    get:
+      summary: List products
+      security: []
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 0 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 5 }
+      responses:
+        '200':
+          description: Page of products
+  /api/v1/products/{id}:
+    get:
+      summary: Get product by id
+      security: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Product
+  /api/v1/products/search/findByNameContaining:
+    get:
+      summary: Search products by name
+      security: []
+      parameters:
+        - in: query
+          name: name
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Page of products
+  /api/v1/products/search/findByCategoryId:
+    get:
+      summary: Search products by category
+      security: []
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Page of products
+  /api/v1/product-category:
+    get:
+      summary: List categories
+      security: []
+      responses:
+        '200':
+          description: Categories
+  /api/v1/countries:
+    get:
+      summary: List countries
+      security: []
+      responses:
+        '200':
+          description: Countries
+  /api/v1/states/search/findByCountryCode:
+    get:
+      summary: States by country code
+      security: []
+      parameters:
+        - in: query
+          name: code
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: States
+  /api/v1/checkout/purchase:
+    post:
+      summary: Place order
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Purchase response with tracking number
+        '401':
+          description: Missing or invalid JWT
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

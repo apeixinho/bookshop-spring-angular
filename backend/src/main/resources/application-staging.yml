@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://mariadb:3306/${MARIADB_DATABASE:bookshop_db}?useSSL=false&useUnicode=yes&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${MARIADB_USERNAME:bookshop_user}
+    password: ${MARIADB_PASSWORD:bookshop_pass}
+    hikari:
+      maximum-pool-size: 5
+      pool-name: BookshopDB-Pool
+  flyway:
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    enabled: true
+    locations: classpath:db/migration/mariadb
+
+app:
+  cors:
+    allowed-origins: ${FRONTEND_ORIGIN:http://localhost:4200,http://frontend:4200}
+
+logging:
+  level:
+    "[com.apeixinho.bookshop]": INFO

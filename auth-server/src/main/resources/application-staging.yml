@@ -1,0 +1,15 @@
+# Staging profile: users + OAuth clients in MariaDB (bookshop_auth database)
+spring:
+  datasource:
+    url: jdbc:mariadb://mariadb:3306/${AUTH_MARIADB_DATABASE:bookshop_auth}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${MARIADB_USERNAME:bookshop_user}
+    password: ${MARIADB_PASSWORD:bookshop_pass}
+    driver-class-name: org.mariadb.jdbc.Driver
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+logging:
+  level:
+    com.apeixinho.bookshop.auth: INFO

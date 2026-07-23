@@ -1,0 +1,51 @@
+server:
+  port: ${BACKEND_PORT:8090}
+  compression:
+    enabled: true
+
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  jpa:
+    defer-datasource-initialization: false
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate:
+        "[default_schema]": bookshop_db
+  sql:
+    init:
+      mode: never
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${AUTH_ISSUER_URI:http://localhost:9000}
+          audiences: ${OAUTH_AUDIENCE:bookshop-api}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+
+app:
+  cors:
+    allowed-origins: ${FRONTEND_ORIGIN:http://localhost:4200}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    root: INFO
+    "[com.apeixinho.bookshop]": INFO
