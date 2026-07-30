@@ -1,113 +1,342 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
-import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
+import { RouterLink } from '@angular/router';
 import { CartService } from '../cart/cart.service';
 import { CatalogApiService } from '../shared/catalog-api.service';
 import { Country, State } from '../shared/models';
 
 @Component({
   selector: 'app-checkout-page',
-  imports: [
-    ReactiveFormsModule,
-    CurrencyPipe,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatSelectModule,
-  ],
+  imports: [ReactiveFormsModule, CurrencyPipe, RouterLink],
   template: `
-    <section class="checkout">
-      <h1>Checkout</h1>
-      <p>Authenticated purchase — total {{ cart.subtotal() | currency }}</p>
+    @if (trackingNumber()) {
+      <section class="success view-enter page-shell">
+        <p class="eyebrow">Order confirmed</p>
+        <h1>Thank you</h1>
+        <p class="lead">
+          Your order has been placed. A confirmation will arrive by email shortly.
+        </p>
+        <div class="tracking">
+          <p class="eyebrow">Tracking number</p>
+          <p class="tracking-value">{{ trackingNumber() }}</p>
+        </div>
+        <a routerLink="/products" class="quiet-btn quiet-btn--outline">Continue shopping</a>
+      </section>
+    } @else if (cart.isEmpty()) {
+      <section class="empty view-enter page-shell">
+        <p>Your cart is empty.</p>
+        <a routerLink="/products" class="quiet-btn quiet-btn--outline">Return to catalog</a>
+      </section>
+    } @else {
+      <section class="checkout view-enter page-shell">
+        <h1>Checkout</h1>
+        <div class="layout">
+          <form [formGroup]="form" (ngSubmit)="submit()">
+            <fieldset>
+              <legend>Contact</legend>
+              <div class="row">
+                <label>
+                  <span>First name</span>
+                  <input class="gallery-input" formControlName="firstName" />
+                </label>
+                <label>
+                  <span>Last name</span>
+                  <input class="gallery-input" formControlName="lastName" />
+                </label>
+              </div>
+              <label class="full">
+                <span>Email</span>
+                <input class="gallery-input" type="email" formControlName="email" />
+              </label>
+            </fieldset>
 
-      <form [formGroup]="form" (ngSubmit)="submit()">
-        <div class="row">
-          <mat-form-field appearance="outline">
-            <mat-label>First name</mat-label>
-            <input matInput formControlName="firstName" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Last name</mat-label>
-            <input matInput formControlName="lastName" />
-          </mat-form-field>
-        </div>
-        <mat-form-field appearance="outline" class="full">
-          <mat-label>Email</mat-label>
-          <input matInput type="email" formControlName="email" />
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="full">
-          <mat-label>Street</mat-label>
-          <input matInput formControlName="street" />
-        </mat-form-field>
-        <div class="row">
-          <mat-form-field appearance="outline">
-            <mat-label>City</mat-label>
-            <input matInput formControlName="city" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Zip</mat-label>
-            <input matInput formControlName="zipCode" />
-          </mat-form-field>
-        </div>
-        <div class="row">
-          <mat-form-field appearance="outline">
-            <mat-label>Country</mat-label>
-            <mat-select formControlName="country" (selectionChange)="onCountry($event.value)">
-              @for (country of countries(); track country.id) {
-                <mat-option [value]="country.code">{{ country.name }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>State</mat-label>
-            <mat-select formControlName="state">
-              @for (state of states(); track state.id) {
-                <mat-option [value]="state.name">{{ state.name }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-        </div>
-        <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid || cart.isEmpty() || submitting()">
-          Place order
-        </button>
-      </form>
+            <fieldset>
+              <legend>Delivery</legend>
+              <label class="full">
+                <span>Street</span>
+                <input class="gallery-input" formControlName="street" />
+              </label>
+              <div class="row">
+                <label>
+                  <span>City</span>
+                  <input class="gallery-input" formControlName="city" />
+                </label>
+                <label>
+                  <span>Zip</span>
+                  <input class="gallery-input" formControlName="zipCode" />
+                </label>
+              </div>
+              <div class="row">
+                <label>
+                  <span>Country</span>
+                  <select
+                    class="gallery-select"
+                    formControlName="country"
+                    (change)="onCountry($any($event.target).value)"
+                  >
+                    <option value="" disabled>Select country</option>
+                    @for (country of countries(); track country.id) {
+                      <option [value]="country.code">{{ country.name }}</option>
+                    }
+                  </select>
+                </label>
+                <label>
+                  <span>State</span>
+                  <select class="gallery-select" formControlName="state">
+                    <option value="" disabled>Select state</option>
+                    @for (state of states(); track state.id) {
+                      <option [value]="state.name">{{ state.name }}</option>
+                    }
+                  </select>
+                </label>
+              </div>
+            </fieldset>
 
-      @if (trackingNumber()) {
-        <p class="success">Order placed! Tracking number: {{ trackingNumber() }}</p>
-      }
-      @if (error()) {
-        <p class="error">{{ error() }}</p>
-      }
-    </section>
+            <button
+              class="quiet-btn quiet-btn--solid"
+              type="submit"
+              [disabled]="form.invalid || cart.isEmpty() || submitting()"
+            >
+              {{ submitting() ? 'Placing order…' : 'Place order' }}
+            </button>
+
+            @if (error()) {
+              <p class="error">{{ error() }}</p>
+            }
+          </form>
+
+          <aside class="summary">
+            <h2>Order summary</h2>
+            <ul>
+              @for (item of cart.items(); track item.product.id) {
+                <li>
+                  <span>{{ item.product.name }} × {{ item.quantity }}</span>
+                  <span class="mono">{{ item.product.unitPrice * item.quantity | currency }}</span>
+                </li>
+              }
+            </ul>
+            <div class="totals">
+              <div>
+                <span>Subtotal</span>
+                <span class="mono">{{ cart.subtotal() | currency }}</span>
+              </div>
+              <div class="grand">
+                <span>Total</span>
+                <span class="mono">{{ cart.subtotal() | currency }}</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    }
   `,
   styles: `
-    .checkout {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 1.5rem;
+    .checkout,
+    .success,
+    .empty {
+      padding-block: 3.5rem;
     }
-    form {
+
+    @media (min-width: 640px) {
+      .checkout,
+      .success,
+      .empty {
+        padding-block: 5rem;
+      }
+    }
+
+    .success,
+    .empty {
+      max-width: 42rem;
+      text-align: center;
+      margin-inline: auto;
+    }
+
+    .empty p {
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .empty a,
+    .success a {
+      display: inline-block;
+      text-decoration: none;
+    }
+
+    h1 {
+      margin: 0 0 3rem;
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 2.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    @media (min-width: 640px) {
+      h1 {
+        font-size: 3rem;
+        margin-bottom: 4rem;
+      }
+    }
+
+    .eyebrow {
+      margin: 0 0 1rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .lead {
+      margin: 0 auto 2rem;
+      max-width: 28rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .tracking {
+      display: inline-block;
+      border: 1px solid var(--border);
+      padding: 1.25rem 2rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .tracking-value {
+      margin: 0;
+      font-family: var(--font-mono);
+      font-size: 1.125rem;
+      letter-spacing: 0.06em;
+    }
+
+    .layout {
+      display: grid;
+      gap: 3rem;
+    }
+
+    @media (min-width: 1024px) {
+      .layout {
+        grid-template-columns: 3fr 2fr;
+        gap: 4rem;
+        align-items: start;
+      }
+    }
+
+    fieldset {
+      border: 0;
+      margin: 0 0 2rem;
+      padding: 0;
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    legend {
+      margin-bottom: 1rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0;
+    }
+
+    label {
       display: grid;
       gap: 0.5rem;
     }
+
+    label span {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
     .row {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
+      gap: 1.5rem;
     }
+
+    @media (min-width: 640px) {
+      .row {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
     .full {
       width: 100%;
     }
-    .success {
-      color: #2f5d50;
-      font-weight: 600;
+
+    .summary {
+      background: var(--surface);
+      padding: 2rem;
     }
+
+    @media (min-width: 640px) {
+      .summary {
+        padding: 2.5rem;
+      }
+    }
+
+    .summary h2 {
+      margin: 0 0 1.5rem;
+      font-size: 0.75rem;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .summary ul {
+      list-style: none;
+      margin: 0 0 2rem;
+      padding: 0;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .summary li {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      font-size: 0.875rem;
+    }
+
+    .summary li span:first-child {
+      color: var(--muted);
+    }
+
+    .mono {
+      font-family: var(--font-mono);
+      flex-shrink: 0;
+    }
+
+    .totals {
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+      display: grid;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .totals > div {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .totals > div span:first-child {
+      color: var(--muted);
+    }
+
+    .grand {
+      padding-top: 0.75rem;
+      font-size: 1rem;
+    }
+
+    .grand span:first-child {
+      color: var(--fg) !important;
+    }
+
     .error {
+      margin-top: 1rem;
       color: #a12828;
+      font-size: 0.875rem;
     }
   `,
 })
@@ -138,6 +367,7 @@ export class CheckoutPage implements OnInit {
   }
 
   onCountry(code: string): void {
+    this.form.controls.state.setValue('');
     this.api.getStates(code).subscribe((states) => this.states.set(states));
   }
 

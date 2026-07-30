@@ -5,18 +5,23 @@ import { AuthService } from './auth.service';
 @Component({
   selector: 'app-auth-callback',
   template: `
-    <section>
+    <section class="callback view-enter page-shell">
       @if (error()) {
-        <p>{{ error() }}</p>
+        <p class="error">{{ error() }}</p>
       } @else {
         <p>Signing you in…</p>
       }
     </section>
   `,
   styles: `
-    section {
-      padding: 2rem;
+    .callback {
+      padding-block: 6rem;
       text-align: center;
+      color: var(--muted);
+    }
+
+    .error {
+      color: #a12828;
     }
   `,
 })

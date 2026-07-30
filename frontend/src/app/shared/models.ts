@@ -26,10 +26,17 @@ export interface State {
   name: string;
 }
 
+/** Spring Data page payload (flat or VIA_DTO nested `page` metadata). */
 export interface Page<T> {
   content: T[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
+  totalElements?: number;
+  totalPages?: number;
+  number?: number;
+  size?: number;
+  page?: {
+    size: number;
+    number: number;
+    totalElements: number;
+    totalPages: number;
+  };
 }
