@@ -45,6 +45,7 @@ public class SecurityConfig {
                     "/api/v1/states", "/api/v1/states/**",
                     "/api/v1/currency/**"
                 ).permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/checkout/payment-webhook").permitAll()
                 .requestMatchers("/api/v1/checkout/**").hasAuthority("SCOPE_bookshop.write")
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()

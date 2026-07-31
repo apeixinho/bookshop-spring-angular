@@ -5,14 +5,15 @@
 | Service | Storage | Notes |
 |---------|---------|--------|
 | auth-server | In-memory users + clients | Profile `!staging` (`DevAuthDataConfig`); JWK file at `bookshop.auth.jwk-path` (default `./data/auth-jwk.json`) |
-| backend | H2 (`classpath:db/migration/h2`) | Profile `dev` |
+| payment-service | In-memory payment sessions | Port `8091`; webhook to backend with `X-Payment-Secret` |
+| backend | H2 (`classpath:db/migration/h2`) | Profile `dev`; calls payment-service for checkout sessions |
 | frontend | `ng serve` in container | Writes `/env.js` at start |
 
 Flyway on the auth-server is **disabled** by default (`spring.flyway.enabled: false`) so the default/dev profile does not need MariaDB.
 
 ## Do not run both Compose files together
 
-`compose.dev.yml` and `compose.staging.yml` both publish host ports `4200`, `8090`, and `9000`. They are separate Compose projects (`bookshop-dev` / `bookshop-staging`) with distinct image tags, but only one stack should be up at a time.
+`compose.dev.yml` and `compose.staging.yml` both publish host ports `4200`, `8090`, `8091`, and `9000`. They are separate Compose projects (`bookshop-dev` / `bookshop-staging`) with distinct image tags, but only one stack should be up at a time.
 
 **Port mismatch tip:** staging frontend is nginx on container port **80** (`4200:80`). Dev frontend is `ng serve` on container port **4200** (`4200:4200`). If `:4200` returns an empty reply while the frontend container looks “up”, the wrong image is probably running (nginx behind a `4200:4200` map).
 
@@ -22,6 +23,7 @@ Flyway on the auth-server is **disabled** by default (`spring.flyway.enabled: fa
 |---------|---------|--------|
 | MariaDB | `bookshop_db` + `bookshop_auth` | Init script `deploy/mariadb/init/01-create-auth-db.sql` |
 | auth-server | JDBC + Flyway on `bookshop_auth` | Profile `staging` (`StagingAuthDataConfig`) |
+| payment-service | In-memory payment sessions | Same mock checkout as dev |
 | backend | Flyway MariaDB migrations | Profile `staging` |
 | frontend | nginx (`Dockerfile.staging`) | Port `4200→80`, runtime `/env.js` |
 
@@ -31,6 +33,7 @@ Required env (see `.env.example`):
 - `AUTH_MARIADB_DATABASE=bookshop_auth` — auth-server datasource  
 - `AUTH_ISSUER_URI=http://localhost:9000` — JWT `iss` (browser + resource server)  
 - `SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://auth-server:9000/oauth2/jwks` — set in Compose for the API  
+- `PAYMENT_*` — mock payment base URL, public checkout URL, webhook URL, shared secrets
 
 Fresh MariaDB volumes are required for the init script to create `bookshop_auth`. If you change init SQL after first boot, remove the `mariadb_data_staging` volume and recreate.
 

@@ -69,10 +69,14 @@ export class CatalogApiService {
   purchase(
     body: unknown,
     idempotencyKey: string,
-  ): Observable<{ orderTrackingNumber: string }> {
-    return this.http.post<{ orderTrackingNumber: string }>(`${this.base}/checkout/purchase`, body, {
-      headers: new HttpHeaders({ 'Idempotency-Key': idempotencyKey }),
-    });
+  ): Observable<{ orderTrackingNumber: string; paymentUrl: string }> {
+    return this.http.post<{ orderTrackingNumber: string; paymentUrl: string }>(
+      `${this.base}/checkout/purchase`,
+      body,
+      {
+        headers: new HttpHeaders({ 'Idempotency-Key': idempotencyKey }),
+      },
+    );
   }
 
   private withLang(params: HttpParams): HttpParams {

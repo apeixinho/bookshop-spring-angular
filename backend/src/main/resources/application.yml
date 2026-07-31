@@ -39,6 +39,13 @@ app:
   cors:
     allowed-origins: ${FRONTEND_ORIGIN:http://localhost:4200}
 
+bookshop:
+  payment:
+    base-url: ${PAYMENT_BASE_URL:http://localhost:8091}
+    api-secret: ${PAYMENT_API_SECRET:dev-payment-secret}
+    webhook-secret: ${PAYMENT_WEBHOOK_SECRET:dev-payment-secret}
+    checkout-result-url: ${PAYMENT_CHECKOUT_RESULT_URL:http://localhost:4200/checkout/result}
+
 springdoc:
   api-docs:
     path: /v3/api-docs

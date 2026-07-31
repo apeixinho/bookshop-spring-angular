@@ -1,5 +1,7 @@
 package com.app.bookshop.config;
 
+import com.app.bookshop.payment.CreatePaymentSessionResponse;
+import com.app.bookshop.payment.PaymentClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -12,6 +14,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -29,6 +33,9 @@ class SecurityConfigTest {
     @MockBean
     private JwtDecoder jwtDecoder;
 
+    @MockBean
+    private PaymentClient paymentClient;
+
     @Test
     void catalogGetWithoutTokenReturns200() throws Exception {
         mockMvc.perform(get("/api/v1/products"))
@@ -45,6 +52,10 @@ class SecurityConfigTest {
 
     @Test
     void checkoutPostWithJwtIsNotUnauthorizedBySecurity() throws Exception {
+        when(paymentClient.createSession(any()))
+            .thenReturn(new CreatePaymentSessionResponse(
+                "sess-sec", "http://localhost:8091/checkout/sess-sec"));
+
         var result = mockMvc.perform(post("/api/v1/checkout/purchase")
                 .with(jwt().jwt(j -> j.subject("user-ada"))
                     .authorities(new SimpleGrantedAuthority("SCOPE_bookshop.write")))

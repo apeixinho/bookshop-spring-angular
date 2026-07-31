@@ -10,4 +10,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Optional<Order> findByOrderTrackingNumber(String orderTrackingNumber);
 
     Optional<Order> findByCustomerIdAndIdempotencyKey(Long customerId, String idempotencyKey);
+
+    Optional<Order> findByPaymentSessionId(String paymentSessionId);
 }

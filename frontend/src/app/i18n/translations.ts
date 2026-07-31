@@ -58,6 +58,15 @@ const en: TranslationDict = {
   'checkout.continue': 'Continue shopping',
   'checkout.purchaseFailed': 'Purchase failed. Sign in again or check the API.',
   'checkout.loadFailed': 'Could not load countries or states. Try again.',
+  'checkout.paidTitle': 'Payment successful',
+  'checkout.paidBody': 'Your order is paid. A confirmation will arrive by email shortly.',
+  'checkout.paymentCancelledTitle': 'Payment cancelled',
+  'checkout.paymentCancelledBody':
+    'No charge was made. Your cart is unchanged — you can try checkout again.',
+  'checkout.paymentFailedTitle': 'Payment could not be completed',
+  'checkout.paymentFailedBody':
+    'Stock may no longer be available, or payment failed. Your cart is unchanged.',
+  'checkout.tryAgain': 'Return to checkout',
   'account.title': 'User details',
   'account.username': 'Username',
   'account.notSignedIn': 'You are not signed in.',
@@ -139,6 +148,15 @@ const pt: TranslationDict = {
   'checkout.continue': 'Continuar a comprar',
   'checkout.purchaseFailed': 'Falha na compra. Entre novamente ou verifique a API.',
   'checkout.loadFailed': 'Não foi possível carregar países ou distritos. Tente novamente.',
+  'checkout.paidTitle': 'Pagamento concluído',
+  'checkout.paidBody': 'A sua encomenda está paga. Em breve receberá uma confirmação por email.',
+  'checkout.paymentCancelledTitle': 'Pagamento cancelado',
+  'checkout.paymentCancelledBody':
+    'Não foi cobrado qualquer valor. O carrinho mantém-se — pode tentar novamente.',
+  'checkout.paymentFailedTitle': 'Não foi possível concluir o pagamento',
+  'checkout.paymentFailedBody':
+    'O stock pode já não estar disponível, ou o pagamento falhou. O carrinho mantém-se.',
+  'checkout.tryAgain': 'Voltar ao checkout',
   'account.title': 'Detalhes da conta',
   'account.username': 'Nome de utilizador',
   'account.notSignedIn': 'Não tem sessão iniciada.',
@@ -220,6 +238,15 @@ const de: TranslationDict = {
   'checkout.continue': 'Weiter einkaufen',
   'checkout.purchaseFailed': 'Kauf fehlgeschlagen. Melden Sie sich erneut an oder prüfen Sie die API.',
   'checkout.loadFailed': 'Länder oder Regionen konnten nicht geladen werden. Bitte erneut versuchen.',
+  'checkout.paidTitle': 'Zahlung erfolgreich',
+  'checkout.paidBody': 'Ihre Bestellung ist bezahlt. Eine Bestätigung folgt per E-Mail.',
+  'checkout.paymentCancelledTitle': 'Zahlung abgebrochen',
+  'checkout.paymentCancelledBody':
+    'Es wurde nichts berechnet. Ihr Warenkorb bleibt erhalten — Sie können es erneut versuchen.',
+  'checkout.paymentFailedTitle': 'Zahlung konnte nicht abgeschlossen werden',
+  'checkout.paymentFailedBody':
+    'Der Bestand ist möglicherweise nicht mehr verfügbar, oder die Zahlung ist fehlgeschlagen. Der Warenkorb bleibt erhalten.',
+  'checkout.tryAgain': 'Zurück zur Kasse',
   'account.title': 'Kontodetails',
   'account.username': 'Benutzername',
   'account.notSignedIn': 'Sie sind nicht angemeldet.',
@@ -301,6 +328,15 @@ const tr: TranslationDict = {
   'checkout.continue': 'Alışverişe devam et',
   'checkout.purchaseFailed': 'Satın alma başarısız. Yeniden giriş yapın veya API’yi kontrol edin.',
   'checkout.loadFailed': 'Ülke veya bölgeler yüklenemedi. Lütfen tekrar deneyin.',
+  'checkout.paidTitle': 'Ödeme başarılı',
+  'checkout.paidBody': 'Siparişiniz ödendi. Kısa süre içinde e-posta ile onay gelecektir.',
+  'checkout.paymentCancelledTitle': 'Ödeme iptal edildi',
+  'checkout.paymentCancelledBody':
+    'Herhangi bir ücret alınmadı. Sepetiniz aynı kaldı — tekrar deneyebilirsiniz.',
+  'checkout.paymentFailedTitle': 'Ödeme tamamlanamadı',
+  'checkout.paymentFailedBody':
+    'Stok kalmamış olabilir veya ödeme başarısız oldu. Sepetiniz aynı kaldı.',
+  'checkout.tryAgain': 'Ödemeye dön',
   'account.title': 'Hesap bilgileri',
   'account.username': 'Kullanıcı adı',
   'account.notSignedIn': 'Oturum açmadınız.',

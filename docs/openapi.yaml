@@ -132,7 +132,7 @@ paths:
           description: Map of currency code to multiplier from USD
   /api/v1/checkout/purchase:
     post:
-      summary: Place order (server prices lines; client totals ignored)
+      summary: Create PENDING order and payment session (stock decremented on webhook)
       security:
         - bearerAuth: []
       parameters:
@@ -148,7 +148,7 @@ paths:
               $ref: '#/components/schemas/Purchase'
       responses:
         '200':
-          description: Purchase response with tracking number
+          description: Tracking number and hosted payment URL
           content:
             application/json:
               schema:
@@ -157,6 +157,28 @@ paths:
           description: Validation, inactive product, or insufficient stock
         '401':
           description: Missing or invalid JWT
+  /api/v1/checkout/payment-webhook:
+    post:
+      summary: Finalize payment from mock payment-service (shared secret, no JWT)
+      security: []
+      parameters:
+        - in: header
+          name: X-Payment-Secret
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentWebhookRequest'
+      responses:
+        '200':
+          description: Order finalized (PAID or CANCELLED)
+        '401':
+          description: Missing or invalid payment secret
+        '409':
+          description: Insufficient stock on SUCCEEDED (order CANCELLED)
 components:
   securitySchemes:
     bearerAuth:
@@ -206,6 +228,16 @@ components:
         quantity: { type: integer, minimum: 1 }
     PurchaseResponse:
       type: object
-      required: [orderTrackingNumber]
+      required: [orderTrackingNumber, paymentUrl]
       properties:
+        orderTrackingNumber: { type: string }
+        paymentUrl: { type: string, format: uri }
+    PaymentWebhookRequest:
+      type: object
+      required: [sessionId, status, orderTrackingNumber]
+      properties:
+        sessionId: { type: string }
+        status:
+          type: string
+          enum: [SUCCEEDED, CANCELLED, FAILED]
         orderTrackingNumber: { type: string }

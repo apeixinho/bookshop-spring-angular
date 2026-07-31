@@ -9,6 +9,7 @@ Greenfield monorepo: Angular 21 storefront, Spring Boot resource server, and Spr
 | `frontend/` | Angular 21 SPA (signals, PKCE + refresh, locale/FX) |
 | `backend/` | Bookshop API (OAuth2 resource server, Flyway, translation tables) |
 | `auth-server/` | Spring Authorization Server (issuer `http://localhost:9000`) |
+| `payment-service/` | Mock hosted checkout (port `8091`; webhook finalizes orders) |
 | `compose.dev.yml` | Local stack (H2, in-memory auth users) |
 | `compose.staging.yml` | Staging-like stack (MariaDB for API + auth) |
 | `docs/` | Environments, ADR, OpenAPI |
@@ -19,24 +20,28 @@ Greenfield monorepo: Angular 21 storefront, Spring Boot resource server, and Spr
 # Terminal 1 — auth
 cd auth-server && mvn spring-boot:run
 
-# Terminal 2 — API
+# Terminal 2 — mock payment
+cd payment-service && mvn spring-boot:run
+
+# Terminal 3 — API
 cd backend && mvn spring-boot:run
 
-# Terminal 3 — SPA
+# Terminal 4 — SPA
 cd frontend && npm start
 ```
 
 - SPA: http://localhost:4200  
 - API: http://localhost:8090  
 - Auth: http://localhost:9000  
+- Payment: http://localhost:8091  
 
 Demo logins (local/dev/staging seed only): `user` / `password`, `admin` / `password`.
 
-Catalog GETs are public (`?lang=` for translated names). Checkout requires PKCE login and scope `bookshop.write`, plus an `Idempotency-Key` header. The API binds the order to the JWT `sub`, builds lines from `{productId, quantity}`, prices from catalog USD × fixed FX rates for `currencyCode`, upserts the customer by oauth subject, and decrements stock atomically. Payment status is mocked as `PENDING`.
+Catalog GETs are public (`?lang=` for translated names). Checkout requires PKCE login and scope `bookshop.write`, plus an `Idempotency-Key` header. The API binds the order to the JWT `sub`, builds lines from `{productId, quantity}`, prices from catalog USD × fixed FX rates for `currencyCode`, upserts the customer by oauth subject, and creates a **PENDING** order without decrementing stock. The SPA redirects to the hosted payment page; after Pay, a signed webhook decrements stock and sets `PAID` (or `CANCELLED` on cancel / stock failure).
 
 ## Docker Compose
 
-Do **not** run both stacks at once (shared host ports `4200` / `8090` / `9000`). They are separate Compose projects with distinct image tags (`*:dev` / `*:staging`).
+Do **not** run both stacks at once (shared host ports `4200` / `8090` / `8091` / `9000`). They are separate Compose projects with distinct image tags (`*:dev` / `*:staging`).
 
 ```bash
 cp .env.example .env

@@ -1,0 +1,30 @@
+server:
+  port: ${PAYMENT_SERVER_PORT:8091}
+
+spring:
+  application:
+    name: bookshop-payment-service
+  thymeleaf:
+    cache: false
+
+bookshop:
+  payment:
+    public-base-url: ${PAYMENT_PUBLIC_BASE_URL:http://localhost:8091}
+    webhook-url: ${PAYMENT_WEBHOOK_URL:http://localhost:8090/api/v1/checkout/payment-webhook}
+    webhook-secret: ${PAYMENT_WEBHOOK_SECRET:dev-payment-secret}
+    api-secret: ${PAYMENT_API_SECRET:dev-payment-secret}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.app.bookshop.payment: DEBUG

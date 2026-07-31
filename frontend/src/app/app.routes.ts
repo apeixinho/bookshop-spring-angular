@@ -12,6 +12,12 @@ export const routes: Routes = [
     loadComponent: () => import('./cart/cart-page').then((m) => m.CartPage),
   },
   {
+    path: 'checkout/result',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./checkout/checkout-result-page').then((m) => m.CheckoutResultPage),
+  },
+  {
     path: 'checkout',
     canActivate: [authGuard],
     loadComponent: () => import('./checkout/checkout-page').then((m) => m.CheckoutPage),

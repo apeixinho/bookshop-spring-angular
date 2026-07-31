@@ -8,6 +8,7 @@ import com.app.bookshop.currency.CurrencyRates;
 import com.app.bookshop.dto.AddressRequest;
 import com.app.bookshop.dto.CustomerRequest;
 import com.app.bookshop.dto.OrderItemRequest;
+import com.app.bookshop.dto.PaymentWebhookRequest;
 import com.app.bookshop.dto.Purchase;
 import com.app.bookshop.dto.PurchaseResponse;
 import com.app.bookshop.entity.Address;
@@ -19,6 +20,9 @@ import com.app.bookshop.entity.Product;
 import com.app.bookshop.entity.State;
 import com.app.bookshop.i18n.SupportedLocale;
 import com.app.bookshop.i18n.TranslationResolver;
+import com.app.bookshop.payment.CreatePaymentSessionRequest;
+import com.app.bookshop.payment.CreatePaymentSessionResponse;
+import com.app.bookshop.payment.PaymentClient;
 import com.app.bookshop.repository.CustomerRepository;
 import com.app.bookshop.repository.OrderRepository;
 import com.app.bookshop.repository.ProductRepository;
@@ -26,9 +30,12 @@ import com.app.bookshop.repository.StateRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import jakarta.transaction.Transactional;
 
@@ -41,28 +48,30 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final StateRepository stateRepository;
+    private final PaymentClient paymentClient;
+    private final OrderPaymentCancelService orderPaymentCancelService;
+    private final String checkoutResultUrl;
 
     public CheckoutServiceImpl(
         CustomerRepository customerRepository,
         OrderRepository orderRepository,
         ProductRepository productRepository,
-        StateRepository stateRepository) {
+        StateRepository stateRepository,
+        PaymentClient paymentClient,
+        OrderPaymentCancelService orderPaymentCancelService,
+        @Value("${bookshop.payment.checkout-result-url:http://localhost:4200/checkout/result}")
+        String checkoutResultUrl) {
         this.customerRepository = customerRepository;
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.stateRepository = stateRepository;
+        this.paymentClient = paymentClient;
+        this.orderPaymentCancelService = orderPaymentCancelService;
+        this.checkoutResultUrl = checkoutResultUrl;
     }
 
     @Override
     @Transactional
-    @CacheEvict(
-        cacheNames = {
-            "products",
-            "productFindById",
-            "productFindByCategory",
-            "productFindByName"
-        },
-        allEntries = true)
     public PurchaseResponse placeOrder(Purchase purchase, String oauthSub, String idempotencyKey) {
         if (purchase == null) {
             throw new IllegalArgumentException("Purchase payload is required");
@@ -82,7 +91,11 @@ public class CheckoutServiceImpl implements CheckoutService {
         Optional<Order> existing = orderRepository.findByCustomerIdAndIdempotencyKey(
             customer.getId(), idempotencyKey.trim());
         if (existing.isPresent()) {
-            return new PurchaseResponse(existing.get().getOrderTrackingNumber());
+            Order order = existing.get();
+            if (order.getPaymentUrl() == null || order.getPaymentUrl().isBlank()) {
+                throw new IllegalStateException("Existing order has no payment URL");
+            }
+            return new PurchaseResponse(order.getOrderTrackingNumber(), order.getPaymentUrl());
         }
 
         String currencyCode = CurrencyRates.normalize(purchase.currencyCode());
@@ -112,10 +125,7 @@ public class CheckoutServiceImpl implements CheckoutService {
             if (product.getUnitPrice() == null) {
                 throw new IllegalArgumentException("Product has no price: " + product.getId());
             }
-
-            int updated = productRepository.decrementStockIfAvailable(
-                product.getId(), itemRequest.quantity());
-            if (updated != 1) {
+            if (product.getUnitsInStock() < itemRequest.quantity()) {
                 throw new IllegalArgumentException(
                     "Insufficient stock for productId: " + product.getId());
             }
@@ -144,19 +154,105 @@ public class CheckoutServiceImpl implements CheckoutService {
             Optional<Order> raced = orderRepository.findByCustomerIdAndIdempotencyKey(
                 customer.getId(), idempotencyKey.trim());
             if (raced.isPresent()) {
-                return new PurchaseResponse(raced.get().getOrderTrackingNumber());
+                Order racedOrder = raced.get();
+                return new PurchaseResponse(racedOrder.getOrderTrackingNumber(), racedOrder.getPaymentUrl());
             }
             throw ex;
         }
 
+        CreatePaymentSessionResponse session;
+        try {
+            session = paymentClient.createSession(
+                new CreatePaymentSessionRequest(
+                    order.getTotalPrice(),
+                    order.getCurrencyCode(),
+                    order.getOrderTrackingNumber(),
+                    checkoutResultUrl,
+                    checkoutResultUrl));
+        } catch (RuntimeException ex) {
+            order.setStatus(OrderStatus.CANCELLED);
+            orderRepository.saveAndFlush(order);
+            throw new IllegalStateException("Payment session could not be created", ex);
+        }
+        order.setPaymentSessionId(session.sessionId());
+        order.setPaymentUrl(session.checkoutUrl());
+        orderRepository.saveAndFlush(order);
+
         log.info(
-            "Checkout placed tracking={} currency={} total={} qty={} (payment mocked as PENDING)",
+            "Checkout placed tracking={} currency={} total={} qty={} awaiting payment session={}",
             order.getOrderTrackingNumber(),
             currencyCode,
             order.getTotalPrice(),
-            order.getTotalQuantity());
+            order.getTotalQuantity(),
+            session.sessionId());
 
-        return new PurchaseResponse(order.getOrderTrackingNumber());
+        return new PurchaseResponse(order.getOrderTrackingNumber(), session.checkoutUrl());
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(
+        cacheNames = {
+            "products",
+            "productFindById",
+            "productFindByCategory",
+            "productFindByName"
+        },
+        allEntries = true)
+    public void finalizePayment(PaymentWebhookRequest request) {
+        if (request == null
+            || request.sessionId() == null
+            || request.status() == null
+            || request.orderTrackingNumber() == null) {
+            throw new IllegalArgumentException("Invalid payment webhook payload");
+        }
+
+        Order order = orderRepository.findByOrderTrackingNumber(request.orderTrackingNumber().trim())
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Unknown order"));
+
+        if (order.getPaymentSessionId() == null
+            || !order.getPaymentSessionId().equals(request.sessionId().trim())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Session does not match order");
+        }
+
+        String status = request.status().trim().toUpperCase();
+        if ("SUCCEEDED".equals(status)) {
+            if (order.getStatus() == OrderStatus.PAID) {
+                return;
+            }
+            if (order.getStatus() != OrderStatus.PENDING) {
+                throw new ResponseStatusException(
+                    HttpStatus.CONFLICT, "Order is not awaiting payment");
+            }
+            for (OrderItem item : order.getOrderItems()) {
+                int updated = productRepository.decrementStockIfAvailable(
+                    item.getProductId(), item.getQuantity());
+                if (updated != 1) {
+                    orderPaymentCancelService.markCancelled(order.getId());
+                    throw new ResponseStatusException(
+                        HttpStatus.CONFLICT,
+                        "Insufficient stock for productId: " + item.getProductId());
+                }
+            }
+            order.setStatus(OrderStatus.PAID);
+            orderRepository.saveAndFlush(order);
+            log.info("Payment succeeded tracking={}", order.getOrderTrackingNumber());
+            return;
+        }
+
+        if ("CANCELLED".equals(status) || "FAILED".equals(status)) {
+            if (order.getStatus() == OrderStatus.PAID) {
+                return;
+            }
+            if (order.getStatus() == OrderStatus.PENDING) {
+                order.setStatus(OrderStatus.CANCELLED);
+                orderRepository.saveAndFlush(order);
+                log.info("Payment cancelled tracking={}", order.getOrderTrackingNumber());
+            }
+            return;
+        }
+
+        throw new IllegalArgumentException("Unsupported payment status: " + request.status());
     }
 
     private Customer resolveCustomer(CustomerRequest request, String oauthSub) {
@@ -216,7 +312,6 @@ public class CheckoutServiceImpl implements CheckoutService {
         address.setCity(request.city().trim());
         address.setZipCode(request.zipCode().trim());
         address.setCountry(countryCode);
-        // Persist stable English label derived from catalog id (not UI locale).
         String stateLabel = TranslationResolver.stateName(state, SupportedLocale.DEFAULT);
         address.setState(stateLabel.isBlank() ? String.valueOf(state.getId()) : stateLabel);
         return address;

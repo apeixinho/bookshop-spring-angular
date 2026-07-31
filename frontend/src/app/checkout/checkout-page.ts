@@ -11,20 +11,7 @@ import { LocaleService } from '../i18n/locale.service';
   selector: 'app-checkout-page',
   imports: [ReactiveFormsModule, CurrencyPipe, RouterLink],
   template: `
-    @if (trackingNumber()) {
-      <section class="success view-enter page-shell">
-        <p class="eyebrow">{{ i18n.t('checkout.confirmed') }}</p>
-        <h1>{{ i18n.t('checkout.thankYou') }}</h1>
-        <p class="lead">{{ i18n.t('checkout.thankYouBody') }}</p>
-        <div class="tracking">
-          <p class="eyebrow">{{ i18n.t('checkout.tracking') }}</p>
-          <p class="tracking-value">{{ trackingNumber() }}</p>
-        </div>
-        <a routerLink="/products" class="quiet-btn quiet-btn--outline">{{
-          i18n.t('checkout.continue')
-        }}</a>
-      </section>
-    } @else if (cart.isEmpty()) {
+    @if (cart.isEmpty()) {
       <section class="empty view-enter page-shell">
         <p>{{ i18n.t('checkout.empty') }}</p>
         <a routerLink="/products" class="quiet-btn quiet-btn--outline">{{ i18n.t('cart.return') }}</a>
@@ -147,20 +134,17 @@ import { LocaleService } from '../i18n/locale.service';
   `,
   styles: `
     .checkout,
-    .success,
     .empty {
       padding-block: 3.5rem;
     }
 
     @media (min-width: 640px) {
       .checkout,
-      .success,
       .empty {
         padding-block: 5rem;
       }
     }
 
-    .success,
     .empty {
       max-width: 42rem;
       text-align: center;
@@ -172,8 +156,7 @@ import { LocaleService } from '../i18n/locale.service';
       margin-bottom: 1.5rem;
     }
 
-    .empty a,
-    .success a {
+    .empty a {
       display: inline-block;
       text-decoration: none;
     }
@@ -191,35 +174,6 @@ import { LocaleService } from '../i18n/locale.service';
         font-size: 3rem;
         margin-bottom: 4rem;
       }
-    }
-
-    .eyebrow {
-      margin: 0 0 1rem;
-      font-size: 0.75rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .lead {
-      margin: 0 auto 2rem;
-      max-width: 28rem;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-
-    .tracking {
-      display: inline-block;
-      border: 1px solid var(--border);
-      padding: 1.25rem 2rem;
-      margin-bottom: 2.5rem;
-    }
-
-    .tracking-value {
-      margin: 0;
-      font-family: var(--font-mono);
-      font-size: 1.125rem;
-      letter-spacing: 0.06em;
     }
 
     .layout {
@@ -362,7 +316,6 @@ export class CheckoutPage {
 
   readonly countries = signal<Country[]>([]);
   readonly states = signal<State[]>([]);
-  readonly trackingNumber = signal<string | null>(null);
   readonly error = signal<string | null>(null);
   readonly submitting = signal(false);
   private geoSeq = 0;
@@ -447,9 +400,9 @@ export class CheckoutPage {
     const idempotencyKey = crypto.randomUUID();
     this.api.purchase(body, idempotencyKey).subscribe({
       next: (response) => {
-        this.trackingNumber.set(response.orderTrackingNumber);
-        this.cart.clearCart();
+        sessionStorage.setItem('bookshop.pending.tracking', response.orderTrackingNumber);
         this.submitting.set(false);
+        window.location.href = response.paymentUrl;
       },
       error: () => {
         this.error.set(this.i18n.t('checkout.purchaseFailed'));
