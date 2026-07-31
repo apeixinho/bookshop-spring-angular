@@ -1,41 +1,117 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { CartService } from './cart/cart.service';
 import { AuthService } from './auth/auth.service';
+import { NotificationService } from './shared/notification.service';
+import { ToastHost } from './shared/toast-host';
+import { LocaleService } from './i18n/locale.service';
+import { CountryCode } from './i18n/locale.models';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastHost, FormsModule],
   template: `
     <div class="shell">
       <header class="site-header">
         <div class="header-inner page-shell">
           <a routerLink="/products" class="brand">Bookshop</a>
           <nav class="main-nav" aria-label="Primary">
+            <a routerLink="/products" routerLinkActive="active" class="nav-link">
+              {{ i18n.t('nav.catalog') }}
+            </a>
+
             <a
-              routerLink="/products"
+              routerLink="/cart"
               routerLinkActive="active"
-              class="nav-link"
-              >Catalog</a
+              class="nav-link icon-link"
+              [attr.aria-label]="i18n.t('nav.cart')"
+              [attr.title]="i18n.t('nav.cart')"
             >
-            <a routerLink="/cart" routerLinkActive="active" class="nav-link">
-              Cart
+              <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M3.5 6.5h1.6l1.4 10.2a1.5 1.5 0 0 0 1.5 1.3h9.2a1.5 1.5 0 0 0 1.5-1.3L20 9H7"
+                />
+                <circle cx="9.5" cy="20" r="1.1" fill="currentColor" />
+                <circle cx="16.5" cy="20" r="1.1" fill="currentColor" />
+              </svg>
               @if (cart.totalItems() > 0) {
-                <span class="cart-count">({{ cart.totalItems() }})</span>
+                <span class="cart-count">{{ cart.totalItems() }}</span>
               }
             </a>
-            @if (auth.isAuthenticated()) {
-              <button
-                type="button"
-                class="nav-link nav-button"
-                (click)="auth.logout()"
+
+            <label class="locale-picker">
+              <span class="sr-only">{{ i18n.t('nav.locale') }}</span>
+              <select
+                class="locale-select"
+                [ngModel]="i18n.countryCode()"
+                (ngModelChange)="onLocaleChange($event)"
               >
-                Sign out
-              </button>
+                @for (option of i18n.options; track option.countryCode) {
+                  <option [ngValue]="option.countryCode">
+                    {{ i18n.optionLabel(option) }}
+                  </option>
+                }
+              </select>
+            </label>
+
+            @if (auth.isAuthenticated()) {
+              <div class="account-menu">
+                <button
+                  type="button"
+                  class="nav-link icon-link account-trigger"
+                  aria-haspopup="true"
+                  [attr.aria-label]="auth.currentUser()?.username || i18n.t('nav.account')"
+                >
+                  <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <circle cx="12" cy="8" r="3.25" fill="none" stroke="currentColor" stroke-width="1.5" />
+                    <path
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      d="M5.5 19.25c1.6-3 4-4.5 6.5-4.5s4.9 1.5 6.5 4.5"
+                    />
+                  </svg>
+                </button>
+                <div class="account-dropdown" role="menu">
+                  <p class="account-name">{{ auth.currentUser()?.username }}</p>
+                  <a routerLink="/account" role="menuitem">{{ i18n.t('nav.userDetails') }}</a>
+                  <button type="button" role="menuitem" (click)="auth.logout()">
+                    {{ i18n.t('nav.signOut') }}
+                  </button>
+                </div>
+              </div>
             } @else {
-              <button type="button" class="nav-link nav-button" (click)="auth.login()">
-                Sign in
-              </button>
+              <div class="account-menu">
+                <button
+                  type="button"
+                  class="nav-link icon-link account-trigger"
+                  aria-haspopup="true"
+                  [attr.aria-label]="i18n.t('nav.signIn')"
+                >
+                  <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <circle cx="12" cy="8" r="3.25" fill="none" stroke="currentColor" stroke-width="1.5" />
+                    <path
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      d="M5.5 19.25c1.6-3 4-4.5 6.5-4.5s4.9 1.5 6.5 4.5"
+                    />
+                  </svg>
+                </button>
+                <div class="account-dropdown" role="menu">
+                  <button type="button" role="menuitem" (click)="auth.login()">
+                    {{ i18n.t('nav.signIn') }}
+                  </button>
+                </div>
+              </div>
             }
           </nav>
         </div>
@@ -47,10 +123,12 @@ import { AuthService } from './auth/auth.service';
 
       <footer class="site-footer">
         <div class="footer-inner page-shell">
-          <span>Independent bookshop · Est. 1987</span>
-          <span>42 Museum Lane, London</span>
+          <span>{{ i18n.t('footer.tagline') }}</span>
+          <span>{{ i18n.t('footer.address') }}</span>
         </div>
       </footer>
+
+      <app-toast-host />
     </div>
   `,
   styles: `
@@ -96,14 +174,16 @@ import { AuthService } from './auth/auth.service';
     .main-nav {
       display: flex;
       align-items: center;
-      gap: 1.5rem;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 1rem 1.25rem;
       font-size: 0.875rem;
       letter-spacing: 0.04em;
     }
 
     @media (min-width: 640px) {
       .main-nav {
-        gap: 2.5rem;
+        gap: 1rem 1.75rem;
       }
     }
 
@@ -143,11 +223,122 @@ import { AuthService } from './auth/auth.service';
       transform: scaleX(1);
     }
 
+    .icon-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .icon-link::after,
+    .account-trigger::after {
+      display: none;
+    }
+
+    .nav-icon {
+      width: 1.35rem;
+      height: 1.35rem;
+      display: block;
+    }
+
+    .locale-picker {
+      display: flex;
+      align-items: center;
+    }
+
+    .locale-select {
+      max-width: 11rem;
+      border: 0;
+      border-bottom: 1px solid var(--border);
+      background: transparent;
+      color: var(--fg);
+      font: inherit;
+      font-size: 0.75rem;
+      letter-spacing: 0.02em;
+      padding: 0.25rem 0;
+      cursor: pointer;
+    }
+
+    @media (min-width: 768px) {
+      .locale-select {
+        max-width: 16rem;
+        font-size: 0.8rem;
+      }
+    }
+
+    .locale-select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .account-menu {
+      position: relative;
+      padding-bottom: 0.75rem;
+      margin-bottom: -0.75rem;
+    }
+
+    .account-dropdown {
+      position: absolute;
+      top: calc(100% - 0.35rem);
+      right: 0;
+      min-width: 11rem;
+      padding: 0.5rem 0;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(4px);
+      transition:
+        opacity 0.2s ease,
+        transform 0.2s ease,
+        visibility 0.2s ease;
+      z-index: 20;
+    }
+
+    .account-menu:hover .account-dropdown,
+    .account-menu:focus-within .account-dropdown {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .account-name {
+      margin: 0;
+      padding: 0.4rem 1rem 0.65rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      color: var(--fg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .account-dropdown a,
+    .account-dropdown button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 0.65rem 1rem;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.2s ease, background 0.2s ease;
+    }
+
+    .account-dropdown a:hover,
+    .account-dropdown button:hover {
+      color: var(--fg);
+      background: var(--surface);
+    }
+
     .cart-count {
       font-family: var(--font-mono);
-      font-size: 0.75rem;
-      margin-left: 0.35rem;
-      color: var(--muted);
+      font-size: 0.7rem;
+      min-width: 1.1rem;
+      text-align: center;
+      color: var(--fg);
     }
 
     .main {
@@ -177,7 +368,18 @@ import { AuthService } from './auth/auth.service';
     }
   `,
 })
-export class App {
+export class App implements OnInit {
   readonly cart = inject(CartService);
   readonly auth = inject(AuthService);
+  readonly i18n = inject(LocaleService);
+  private readonly notifications = inject(NotificationService);
+
+  ngOnInit(): void {
+    document.documentElement.lang = this.i18n.language();
+    this.notifications.consumeFlash();
+  }
+
+  onLocaleChange(code: CountryCode): void {
+    this.i18n.selectCountry(code);
+  }
 }

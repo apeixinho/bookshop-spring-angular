@@ -48,4 +48,4 @@ springdoc:
 logging:
   level:
     root: INFO
-    "[com.apeixinho.bookshop]": INFO
+    "[com.app.bookshop]": INFO

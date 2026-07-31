@@ -1,122 +1,33 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Bookshop Sign In</title>
+  <title th:text="#{login.title}">Bookshop Sign In</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet"/>
-  <style>
-    :root {
-      --bg: oklch(98.2% 0.004 100);
-      --surface: oklch(95.5% 0.006 95);
-      --fg: oklch(17% 0.012 280);
-      --muted: oklch(52% 0.014 280);
-      --border: oklch(89% 0.008 100);
-      --accent: oklch(42% 0.045 135);
-      --font-display: 'Cormorant Garamond', Georgia, serif;
-      --font-sans: 'DM Sans', 'Helvetica Neue', sans-serif;
-    }
-
-    *, *::before, *::after { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100dvh;
-      display: grid;
-      place-items: center;
-      padding: 1.5rem;
-      font-family: var(--font-sans);
-      color: var(--fg);
-      background: var(--bg);
-      -webkit-font-smoothing: antialiased;
-    }
-
-    form {
-      width: min(22rem, 100%);
-    }
-
-    h1 {
-      margin: 0 0 0.5rem;
-      font-family: var(--font-display);
-      font-weight: 500;
-      font-size: 2.5rem;
-      letter-spacing: -0.02em;
-      line-height: 1;
-    }
-
-    .lede {
-      margin: 0 0 2rem;
-      color: var(--muted);
-      font-size: 0.95rem;
-      line-height: 1.5;
-    }
-
-    .error {
-      color: #a12828;
-      margin: 0 0 1.25rem;
-      font-size: 0.875rem;
-    }
-
-    label {
-      display: grid;
-      gap: 0.5rem;
-      margin-bottom: 1.25rem;
-      font-size: 0.75rem;
-      color: var(--muted);
-    }
-
-    input {
-      width: 100%;
-      padding: 0.625rem 0;
-      border: 0;
-      border-bottom: 1px solid var(--border);
-      background: transparent;
-      font: inherit;
-      font-size: 0.875rem;
-      color: var(--fg);
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px color-mix(in oklch, var(--accent) 30%, transparent);
-    }
-
-    button {
-      margin-top: 0.75rem;
-      width: 100%;
-      padding: 1rem 2rem;
-      border: 0;
-      background: var(--fg);
-      color: var(--bg);
-      font: inherit;
-      font-size: 0.75rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: background 0.3s ease;
-    }
-
-    button:hover {
-      background: var(--accent);
-    }
-  </style>
+  <link rel="stylesheet" th:href="@{/css/login.css}"/>
 </head>
 <body>
-<form th:action="@{/login}" method="post">
-  <h1>Bookshop</h1>
-  <p class="lede">Sign in to complete checkout</p>
-  <div class="error" th:if="${param.error}">Invalid username or password</div>
-  <label for="username">Username
-    <input id="username" name="username" type="text" autocomplete="username" required autofocus/>
-  </label>
-  <label for="password">Password
-    <input id="password" name="password" type="password" autocomplete="current-password" required/>
-  </label>
-  <button type="submit">Sign in</button>
-</form>
+  <div class="login">
+    <form class="login__form" th:action="@{/login}" method="post">
+      <h1 class="login__brand" th:text="#{login.brand}">Bookshop</h1>
+      <p class="login__lede" th:text="#{login.lede}">Sign in to complete checkout</p>
+      <div class="login__error" th:if="${param.error}" th:text="#{login.error}">Invalid username or password</div>
+      <label class="login__field" for="username">
+        <span th:text="#{login.username}">Username</span>
+        <input id="username" name="username" type="text" autocomplete="username" required autofocus/>
+      </label>
+      <label class="login__field" for="password">
+        <span th:text="#{login.password}">Password</span>
+        <input id="password" name="password" type="password" autocomplete="current-password" required/>
+      </label>
+      <button type="submit" th:text="#{login.submit}">Sign in</button>
+    </form>
+    <p class="login__cancel">
+      <a th:href="${shopUrl}" th:text="#{login.cancel}">Continue shopping</a>
+    </p>
+  </div>
 </body>
 </html>

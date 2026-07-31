@@ -12,4 +12,4 @@ spring:
 
 logging:
   level:
-    com.apeixinho.bookshop.auth: INFO
+    com.app.bookshop.auth: INFO

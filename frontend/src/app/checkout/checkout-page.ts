@@ -1,10 +1,11 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal, untracked } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CartService } from '../cart/cart.service';
 import { CatalogApiService } from '../shared/catalog-api.service';
 import { Country, State } from '../shared/models';
+import { LocaleService } from '../i18n/locale.service';
 
 @Component({
   selector: 'app-checkout-page',
@@ -12,81 +13,81 @@ import { Country, State } from '../shared/models';
   template: `
     @if (trackingNumber()) {
       <section class="success view-enter page-shell">
-        <p class="eyebrow">Order confirmed</p>
-        <h1>Thank you</h1>
-        <p class="lead">
-          Your order has been placed. A confirmation will arrive by email shortly.
-        </p>
+        <p class="eyebrow">{{ i18n.t('checkout.confirmed') }}</p>
+        <h1>{{ i18n.t('checkout.thankYou') }}</h1>
+        <p class="lead">{{ i18n.t('checkout.thankYouBody') }}</p>
         <div class="tracking">
-          <p class="eyebrow">Tracking number</p>
+          <p class="eyebrow">{{ i18n.t('checkout.tracking') }}</p>
           <p class="tracking-value">{{ trackingNumber() }}</p>
         </div>
-        <a routerLink="/products" class="quiet-btn quiet-btn--outline">Continue shopping</a>
+        <a routerLink="/products" class="quiet-btn quiet-btn--outline">{{
+          i18n.t('checkout.continue')
+        }}</a>
       </section>
     } @else if (cart.isEmpty()) {
       <section class="empty view-enter page-shell">
-        <p>Your cart is empty.</p>
-        <a routerLink="/products" class="quiet-btn quiet-btn--outline">Return to catalog</a>
+        <p>{{ i18n.t('checkout.empty') }}</p>
+        <a routerLink="/products" class="quiet-btn quiet-btn--outline">{{ i18n.t('cart.return') }}</a>
       </section>
     } @else {
       <section class="checkout view-enter page-shell">
-        <h1>Checkout</h1>
+        <h1>{{ i18n.t('checkout.title') }}</h1>
         <div class="layout">
           <form [formGroup]="form" (ngSubmit)="submit()">
             <fieldset>
-              <legend>Contact</legend>
+              <legend>{{ i18n.t('checkout.contact') }}</legend>
               <div class="row">
                 <label>
-                  <span>First name</span>
+                  <span>{{ i18n.t('checkout.firstName') }}</span>
                   <input class="gallery-input" formControlName="firstName" />
                 </label>
                 <label>
-                  <span>Last name</span>
+                  <span>{{ i18n.t('checkout.lastName') }}</span>
                   <input class="gallery-input" formControlName="lastName" />
                 </label>
               </div>
               <label class="full">
-                <span>Email</span>
+                <span>{{ i18n.t('checkout.email') }}</span>
                 <input class="gallery-input" type="email" formControlName="email" />
               </label>
             </fieldset>
 
             <fieldset>
-              <legend>Delivery</legend>
+              <legend>{{ i18n.t('checkout.delivery') }}</legend>
               <label class="full">
-                <span>Street</span>
+                <span>{{ i18n.t('checkout.street') }}</span>
                 <input class="gallery-input" formControlName="street" />
               </label>
               <div class="row">
                 <label>
-                  <span>City</span>
+                  <span>{{ i18n.t('checkout.city') }}</span>
                   <input class="gallery-input" formControlName="city" />
                 </label>
                 <label>
-                  <span>Zip</span>
+                  <span>{{ i18n.t('checkout.zip') }}</span>
                   <input class="gallery-input" formControlName="zipCode" />
                 </label>
               </div>
               <div class="row">
                 <label>
-                  <span>Country</span>
+                  <span>{{ i18n.t('checkout.country') }}</span>
                   <select
                     class="gallery-select"
                     formControlName="country"
                     (change)="onCountry($any($event.target).value)"
                   >
-                    <option value="" disabled>Select country</option>
+                    <option value="" disabled>{{ i18n.t('checkout.selectCountry') }}</option>
                     @for (country of countries(); track country.id) {
                       <option [value]="country.code">{{ country.name }}</option>
                     }
                   </select>
                 </label>
                 <label>
-                  <span>State</span>
+                  <span>{{ i18n.t('checkout.state') }}</span>
                   <select class="gallery-select" formControlName="state">
-                    <option value="" disabled>Select state</option>
+                    <option value="" disabled>{{ i18n.t('checkout.selectState') }}</option>
                     @for (state of states(); track state.id) {
-                      <option [value]="state.name">{{ state.name }}</option>
+                      <option [value]="state.id">{{ state.name }}</option>
                     }
                   </select>
                 </label>
@@ -98,7 +99,7 @@ import { Country, State } from '../shared/models';
               type="submit"
               [disabled]="form.invalid || cart.isEmpty() || submitting()"
             >
-              {{ submitting() ? 'Placing order…' : 'Place order' }}
+              {{ submitting() ? i18n.t('checkout.placingOrder') : i18n.t('checkout.placeOrder') }}
             </button>
 
             @if (error()) {
@@ -107,23 +108,36 @@ import { Country, State } from '../shared/models';
           </form>
 
           <aside class="summary">
-            <h2>Order summary</h2>
+            <h2>{{ i18n.t('checkout.summary') }}</h2>
             <ul>
               @for (item of cart.items(); track item.product.id) {
                 <li>
                   <span>{{ item.product.name }} × {{ item.quantity }}</span>
-                  <span class="mono">{{ item.product.unitPrice * item.quantity | currency }}</span>
+                  <span class="mono">{{
+                    i18n.toDisplayMoney(item.product.unitPrice * item.quantity)
+                      | currency
+                        : i18n.currencyCode()
+                        : 'symbol'
+                        : '1.2-2'
+                        : i18n.localeId()
+                  }}</span>
                 </li>
               }
             </ul>
             <div class="totals">
               <div>
-                <span>Subtotal</span>
-                <span class="mono">{{ cart.subtotal() | currency }}</span>
+                <span>{{ i18n.t('cart.subtotal') }}</span>
+                <span class="mono">{{
+                  cart.subtotal()
+                    | currency: i18n.currencyCode() : 'symbol' : '1.2-2' : i18n.localeId()
+                }}</span>
               </div>
               <div class="grand">
-                <span>Total</span>
-                <span class="mono">{{ cart.subtotal() | currency }}</span>
+                <span>{{ i18n.t('checkout.total') }}</span>
+                <span class="mono">{{
+                  cart.subtotal()
+                    | currency: i18n.currencyCode() : 'symbol' : '1.2-2' : i18n.localeId()
+                }}</span>
               </div>
             </div>
           </aside>
@@ -340,10 +354,11 @@ import { Country, State } from '../shared/models';
     }
   `,
 })
-export class CheckoutPage implements OnInit {
+export class CheckoutPage {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(CatalogApiService);
   readonly cart = inject(CartService);
+  readonly i18n = inject(LocaleService);
 
   readonly countries = signal<Country[]>([]);
   readonly states = signal<State[]>([]);
@@ -362,8 +377,23 @@ export class CheckoutPage implements OnInit {
     state: ['', Validators.required],
   });
 
-  ngOnInit(): void {
-    this.api.getCountries().subscribe((countries) => this.countries.set(countries));
+  constructor() {
+    effect(() => {
+      this.i18n.language();
+      untracked(() => {
+        this.api.getCountries().subscribe((countries) => this.countries.set(countries));
+        const code = this.form.controls.country.value;
+        const stateId = this.form.controls.state.value;
+        if (code) {
+          this.api.getStates(code).subscribe((states) => {
+            this.states.set(states);
+            if (stateId && !states.some((s) => String(s.id) === String(stateId))) {
+              this.form.controls.state.setValue('');
+            }
+          });
+        }
+      });
+    });
   }
 
   onCountry(code: string): void {
@@ -378,19 +408,14 @@ export class CheckoutPage implements OnInit {
     this.submitting.set(true);
     this.error.set(null);
     const value = this.form.getRawValue();
+    const selectedState = this.states().find((s) => String(s.id) === String(value.state));
     const address = {
       street: value.street,
       city: value.city,
-      state: value.state,
+      state: selectedState?.name ?? '',
       country: value.country,
       zipCode: value.zipCode,
     };
-    const orderItems = this.cart.items().map((item) => ({
-      imageUrl: item.product.imageUrl,
-      quantity: item.quantity,
-      unitPrice: item.product.unitPrice,
-      productId: item.product.id,
-    }));
     const body = {
       customer: {
         firstName: value.firstName,
@@ -399,11 +424,11 @@ export class CheckoutPage implements OnInit {
       },
       shippingAddress: address,
       billingAddress: address,
-      order: {
-        totalQuantity: this.cart.totalItems(),
-        totalPrice: this.cart.subtotal(),
-      },
-      orderItems,
+      orderItems: this.cart.items().map((item) => ({
+        productId: item.product.id,
+        quantity: item.quantity,
+      })),
+      currencyCode: this.i18n.currencyCode(),
     };
 
     this.api.purchase(body).subscribe({
@@ -413,7 +438,7 @@ export class CheckoutPage implements OnInit {
         this.submitting.set(false);
       },
       error: () => {
-        this.error.set('Purchase failed. Sign in again or check the API.');
+        this.error.set(this.i18n.t('checkout.purchaseFailed'));
         this.submitting.set(false);
       },
     });

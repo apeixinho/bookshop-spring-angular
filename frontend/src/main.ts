@@ -1,6 +1,8 @@
 import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
 import { App } from './app/app';
+import { registerAppLocales } from './app/i18n/register-locales';
 
-bootstrapApplication(App, appConfig)
-  .catch((err) => console.error(err));
+registerAppLocales();
+
+bootstrapApplication(App, appConfig).catch((err) => console.error(err));

@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal, untracked } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CatalogApiService } from '../shared/catalog-api.service';
 import { Page, Product, ProductCategory } from '../shared/models';
 import { CartService } from '../cart/cart.service';
+import { LocaleService } from '../i18n/locale.service';
 
 const PAGE_SIZE = 8;
 
@@ -15,23 +16,24 @@ const PAGE_SIZE = 8;
       <section class="filters page-shell">
         <div class="filter-row">
           <label class="search">
-            <span class="sr-only">Search</span>
+            <span class="sr-only">{{ i18n.t('catalog.search') }}</span>
             <input
               class="gallery-input"
               type="search"
               [(ngModel)]="search"
+              (ngModelChange)="onSearchInput()"
               (keydown.enter)="onSearch()"
-              placeholder="Search titles…"
+              [placeholder]="i18n.t('catalog.searchPlaceholder')"
             />
           </label>
           <label class="category">
-            <span class="sr-only">Category</span>
+            <span class="sr-only">{{ i18n.t('catalog.category') }}</span>
             <select
               class="gallery-select"
               [(ngModel)]="categoryId"
               (ngModelChange)="onCategoryChange()"
             >
-              <option [ngValue]="null">All categories</option>
+              <option [ngValue]="null">{{ i18n.t('catalog.allCategories') }}</option>
               @for (category of categories(); track category.id) {
                 <option [ngValue]="category.id">{{ category.categoryName }}</option>
               }
@@ -42,7 +44,7 @@ const PAGE_SIZE = 8;
 
       <section class="grid-wrap page-shell">
         @if (products().length === 0) {
-          <p class="empty">No works match your search.</p>
+          <p class="empty">{{ i18n.t('catalog.empty') }}</p>
         } @else {
           <div class="grid">
             @for (product of products(); track product.id; let i = $index) {
@@ -58,12 +60,22 @@ const PAGE_SIZE = 8;
                 <div class="meta">
                   <h2>{{ product.name }}</h2>
                   @if (product.description) {
-                    <p class="desc">{{ product.description }}</p>
+                    <div class="desc-wrap">
+                      <p class="desc">{{ product.description }}</p>
+                      <span class="desc-tooltip" role="tooltip">{{ product.description }}</span>
+                    </div>
                   }
                   <div class="row">
-                    <span class="price">{{ product.unitPrice | currency }}</span>
+                    <span class="price">{{
+                      i18n.toDisplayMoney(product.unitPrice)
+                        | currency
+                          : i18n.currencyCode()
+                          : 'symbol'
+                          : '1.2-2'
+                          : i18n.localeId()
+                    }}</span>
                     <button class="quiet-btn add" type="button" (click)="add(product)">
-                      Add to cart
+                      {{ i18n.t('catalog.addToCart') }}
                     </button>
                   </div>
                 </div>
@@ -72,14 +84,14 @@ const PAGE_SIZE = 8;
           </div>
 
           @if (totalPages() > 1) {
-            <nav class="pagination" aria-label="Catalog pages">
+            <nav class="pagination" [attr.aria-label]="i18n.t('catalog.pages')">
               <button
                 type="button"
                 class="quiet-btn page-btn"
                 [disabled]="pageIndex() === 0"
                 (click)="goToPage(pageIndex() - 1)"
               >
-                Previous
+                {{ i18n.t('catalog.previous') }}
               </button>
               <span class="page-status">
                 <span class="mono">{{ pageIndex() + 1 }}</span>
@@ -92,7 +104,7 @@ const PAGE_SIZE = 8;
                 [disabled]="pageIndex() >= totalPages() - 1"
                 (click)="goToPage(pageIndex() + 1)"
               >
-                Next
+                {{ i18n.t('catalog.next') }}
               </button>
             </nav>
           }
@@ -157,6 +169,7 @@ const PAGE_SIZE = 8;
       grid-template-columns: 1fr;
       column-gap: 2rem;
       row-gap: 3.5rem;
+      align-items: stretch;
     }
 
     @media (min-width: 640px) {
@@ -178,6 +191,12 @@ const PAGE_SIZE = 8;
       }
     }
 
+    .product {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
     .frame {
       aspect-ratio: 3 / 4;
       margin-bottom: 1.25rem;
@@ -191,36 +210,86 @@ const PAGE_SIZE = 8;
       display: block;
     }
 
+    .meta {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
     .meta h2 {
       margin: 0;
       font-family: var(--font-display);
       font-size: 1.25rem;
       font-weight: 500;
-      line-height: 1.2;
+      line-height: 1.25;
       letter-spacing: -0.02em;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      min-height: calc(1.25em * 2);
     }
 
     @media (min-width: 640px) {
       .meta h2 {
         font-size: 1.5rem;
+        min-height: calc(1.25em * 2);
       }
     }
 
+    .desc-wrap {
+      position: relative;
+      margin-top: 0.35rem;
+    }
+
     .desc {
-      margin: 0.35rem 0 0;
+      margin: 0;
       font-size: 0.875rem;
+      line-height: 1.4;
       color: var(--muted);
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
+      cursor: help;
+    }
+
+    .desc-tooltip {
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 0.5rem);
+      z-index: 5;
+      width: max(100%, 14rem);
+      max-width: 20rem;
+      padding: 0.65rem 0.75rem;
+      background: var(--fg);
+      color: var(--bg);
+      font-size: 0.8rem;
+      line-height: 1.45;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(4px);
+      transition:
+        opacity 0.2s ease,
+        transform 0.2s ease,
+        visibility 0.2s ease;
+      pointer-events: none;
+    }
+
+    .desc-wrap:hover .desc-tooltip,
+    .desc-wrap:focus-within .desc-tooltip {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
     }
 
     .row {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       justify-content: space-between;
       gap: 1rem;
+      margin-top: auto;
       padding-top: 0.75rem;
     }
 
@@ -271,9 +340,10 @@ const PAGE_SIZE = 8;
     }
   `,
 })
-export class ProductsPage implements OnInit {
+export class ProductsPage {
   private readonly api = inject(CatalogApiService);
   private readonly cart = inject(CartService);
+  readonly i18n = inject(LocaleService);
 
   readonly products = signal<Product[]>([]);
   readonly categories = signal<ProductCategory[]>([]);
@@ -283,13 +353,35 @@ export class ProductsPage implements OnInit {
 
   search = '';
   categoryId: number | null = null;
+  private searchDebounce: ReturnType<typeof setTimeout> | null = null;
+  /** Bumped so slower responses cannot overwrite a newer catalog load. */
+  private loadSeq = 0;
 
-  ngOnInit(): void {
-    this.api.getCategories().subscribe((categories) => this.categories.set(categories));
-    this.load();
+  constructor() {
+    effect(() => {
+      this.i18n.language();
+      untracked(() => {
+        this.api.getCategories().subscribe((categories) => this.categories.set(categories));
+        this.load();
+      });
+    });
+  }
+
+  onSearchInput(): void {
+    if (this.searchDebounce != null) {
+      clearTimeout(this.searchDebounce);
+    }
+    this.searchDebounce = setTimeout(() => {
+      this.pageIndex.set(0);
+      this.load();
+    }, 300);
   }
 
   onSearch(): void {
+    if (this.searchDebounce != null) {
+      clearTimeout(this.searchDebounce);
+      this.searchDebounce = null;
+    }
     this.pageIndex.set(0);
     this.load();
   }
@@ -309,14 +401,20 @@ export class ProductsPage implements OnInit {
 
   load(): void {
     const page = this.pageIndex();
+    const query = this.search.trim();
+    const seq = ++this.loadSeq;
     const request =
-      this.categoryId != null
-        ? this.api.searchByCategory(this.categoryId, page, PAGE_SIZE)
-        : this.search.trim()
-          ? this.api.searchByName(this.search.trim(), page, PAGE_SIZE)
+      query.length > 0
+        ? this.api.searchByName(query, page, PAGE_SIZE, this.categoryId)
+        : this.categoryId != null
+          ? this.api.searchByCategory(this.categoryId, page, PAGE_SIZE)
           : this.api.getProducts(page, PAGE_SIZE);
 
-    request.subscribe((result) => this.applyPage(result));
+    request.subscribe((result) => {
+      if (seq === this.loadSeq) {
+        this.applyPage(result);
+      }
+    });
   }
 
   add(product: Product): void {

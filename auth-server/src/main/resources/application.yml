@@ -19,6 +19,7 @@ bookshop:
     frontend-origin: ${FRONTEND_ORIGIN:http://localhost:4200}
     client-id: ${OAUTH_CLIENT_ID:bookshop-spa}
     audience: ${OAUTH_AUDIENCE:bookshop-api}
+    jwk-path: ${AUTH_JWK_PATH:./data/auth-jwk.json}
 
 management:
   endpoints:
@@ -34,4 +35,4 @@ logging:
   level:
     root: INFO
     org.springframework.security: INFO
-    com.apeixinho.bookshop.auth: DEBUG
+    com.app.bookshop.auth: DEBUG

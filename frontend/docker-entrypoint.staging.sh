@@ -7,7 +7,8 @@ window.__BOOKSHOP_ENV__ = {
   authIssuer: "${AUTH_ISSUER_URI:-http://localhost:9000}",
   oauthClientId: "${OAUTH_CLIENT_ID:-bookshop-spa}",
   oauthScopes: "${OAUTH_SCOPES:-openid profile bookshop.read bookshop.write}",
-  oauthRedirectUri: "${OAUTH_REDIRECT_URI:-http://localhost:4200/auth/callback}"
+  oauthRedirectUri: "${OAUTH_REDIRECT_URI:-http://localhost:4200/auth/callback}",
+  oauthPostLogoutRedirectUri: "${OAUTH_POST_LOGOUT_REDIRECT_URI:-http://localhost:4200/products}"
 };
 EOF
 

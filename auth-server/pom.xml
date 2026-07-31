@@ -11,7 +11,7 @@
     <relativePath />
   </parent>
 
-  <groupId>com.apeixinho.bookshop</groupId>
+  <groupId>com.app.bookshop</groupId>
   <artifactId>bookshop-auth-server</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <name>bookshop-auth-server</name>

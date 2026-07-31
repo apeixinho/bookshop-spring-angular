@@ -5,4 +5,5 @@ export const environment = {
   oauthClientId: 'bookshop-spa',
   oauthScopes: 'openid profile bookshop.read bookshop.write',
   oauthRedirectUri: 'http://localhost:4200/auth/callback',
+  oauthPostLogoutRedirectUri: 'http://localhost:4200/products',
 };

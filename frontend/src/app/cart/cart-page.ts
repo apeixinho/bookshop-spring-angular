@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CartService } from './cart.service';
+import { LocaleService } from '../i18n/locale.service';
 
 @Component({
   selector: 'app-cart-page',
@@ -9,13 +10,13 @@ import { CartService } from './cart.service';
   template: `
     @if (cart.isEmpty()) {
       <section class="empty view-enter page-shell">
-        <h1>Your cart is empty</h1>
-        <p>Nothing selected yet. Browse the catalog at your own pace.</p>
-        <a routerLink="/products" class="quiet-btn quiet-btn--outline">Return to catalog</a>
+        <h1>{{ i18n.t('cart.emptyTitle') }}</h1>
+        <p>{{ i18n.t('cart.emptyBody') }}</p>
+        <a routerLink="/products" class="quiet-btn quiet-btn--outline">{{ i18n.t('cart.return') }}</a>
       </section>
     } @else {
       <section class="cart view-enter page-shell">
-        <h1>Cart</h1>
+        <h1>{{ i18n.t('cart.title') }}</h1>
         <ul>
           @for (item of cart.items(); track item.product.id) {
             <li>
@@ -37,7 +38,7 @@ import { CartService } from './cart.service';
                     <button
                       type="button"
                       class="qty-btn"
-                      aria-label="Decrease quantity"
+                      [attr.aria-label]="i18n.t('cart.decrease')"
                       (click)="cart.updateQuantity(item.product.id, item.quantity - 1)"
                     >
                       −
@@ -46,20 +47,27 @@ import { CartService } from './cart.service';
                     <button
                       type="button"
                       class="qty-btn"
-                      aria-label="Increase quantity"
+                      [attr.aria-label]="i18n.t('cart.increase')"
                       (click)="cart.updateQuantity(item.product.id, item.quantity + 1)"
                     >
                       +
                     </button>
                   </div>
                   <div class="line">
-                    <span class="price">{{ item.product.unitPrice * item.quantity | currency }}</span>
+                    <span class="price">{{
+                      i18n.toDisplayMoney(item.product.unitPrice * item.quantity)
+                        | currency
+                          : i18n.currencyCode()
+                          : 'symbol'
+                          : '1.2-2'
+                          : i18n.localeId()
+                    }}</span>
                     <button
                       type="button"
                       class="quiet-btn"
                       (click)="cart.removeFromCart(item.product.id)"
                     >
-                      Remove
+                      {{ i18n.t('cart.remove') }}
                     </button>
                   </div>
                 </div>
@@ -69,11 +77,14 @@ import { CartService } from './cart.service';
         </ul>
         <div class="summary">
           <div>
-            <p class="label">Subtotal</p>
-            <p class="total">{{ cart.subtotal() | currency }}</p>
-            <p class="note">Shipping calculated at checkout</p>
+            <p class="label">{{ i18n.t('cart.subtotal') }}</p>
+            <p class="total">{{
+              cart.subtotal()
+                | currency: i18n.currencyCode() : 'symbol' : '1.2-2' : i18n.localeId()
+            }}</p>
+            <p class="note">{{ i18n.t('cart.shippingNote') }}</p>
           </div>
-          <a routerLink="/checkout" class="quiet-btn quiet-btn--solid">Proceed to checkout</a>
+          <a routerLink="/checkout" class="quiet-btn quiet-btn--solid">{{ i18n.t('cart.checkout') }}</a>
         </div>
       </section>
     }
@@ -305,6 +316,7 @@ import { CartService } from './cart.service';
 })
 export class CartPage {
   readonly cart = inject(CartService);
+  readonly i18n = inject(LocaleService);
 
   imageSrc(url: string | null | undefined): string {
     if (!url) {

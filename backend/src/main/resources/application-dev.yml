@@ -28,4 +28,4 @@ app:
 
 logging:
   level:
-    "[com.apeixinho.bookshop]": DEBUG
+    "[com.app.bookshop]": DEBUG

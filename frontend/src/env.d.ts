@@ -5,6 +5,7 @@ declare global {
     oauthClientId?: string;
     oauthScopes?: string;
     oauthRedirectUri?: string;
+    oauthPostLogoutRedirectUri?: string;
   }
 
   interface Window {

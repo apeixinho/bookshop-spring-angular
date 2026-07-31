@@ -2,19 +2,6 @@ BEGIN;
 
 USE `bookshop_db` ;
 
---
--- Prep work
---
--- SET FOREIGN_KEY_CHECKS=0;
--- DROP TABLE IF EXISTS `order_item`;
--- DROP TABLE IF EXISTS `orders`;
--- DROP TABLE IF EXISTS `customer`;
--- DROP TABLE IF EXISTS `address`;
--- SET FOREIGN_KEY_CHECKS=1;
-
---
--- Table structure for table `address`
---
 CREATE TABLE IF NOT EXISTS `address` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `city` varchar(255) DEFAULT NULL,
@@ -25,20 +12,15 @@ CREATE TABLE IF NOT EXISTS `address` (
   PRIMARY KEY (`id`)
 );
 
---
--- Table structure for table `customer`
---
 CREATE TABLE IF NOT EXISTS `customer` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `first_name` varchar(255) DEFAULT NULL,
   `last_name` varchar(255) DEFAULT NULL,
   `email` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `UK_customer_email` (`email`)
 );
 
---
--- Table structure for table `orders`
---
 CREATE TABLE IF NOT EXISTS `orders` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `order_tracking_number` varchar(255) DEFAULT NULL,
@@ -59,9 +41,6 @@ CREATE TABLE IF NOT EXISTS `orders` (
   CONSTRAINT `FK_shipping_address_id` FOREIGN KEY (`shipping_address_id`) REFERENCES `address` (`id`)
 );
 
---
--- Table structure for table `order_items`
---
 CREATE TABLE IF NOT EXISTS `order_item` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `image_url` varchar(255) DEFAULT NULL,

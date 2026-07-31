@@ -2,18 +2,13 @@ BEGIN;
 
 USE "bookshop_db" ;
 
---
--- Prep work
---
 SET REFERENTIAL_INTEGRITY FALSE;
 DROP TABLE IF EXISTS `order_item`;
 DROP TABLE IF EXISTS `orders`;
 DROP TABLE IF EXISTS `customer`;
 DROP TABLE IF EXISTS `address`;
 SET REFERENTIAL_INTEGRITY TRUE;
---
--- Table structure for table `address`
---
+
 CREATE TABLE IF NOT EXISTS `address` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `city` varchar(255) DEFAULT NULL,
@@ -24,20 +19,15 @@ CREATE TABLE IF NOT EXISTS `address` (
   PRIMARY KEY (`id`)
 );
 
---
--- Table structure for table `customer`
---
 CREATE TABLE IF NOT EXISTS `customer` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `first_name` varchar(255) DEFAULT NULL,
   `last_name` varchar(255) DEFAULT NULL,
   `email` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  CONSTRAINT `UK_customer_email` UNIQUE (`email`)
 );
 
---
--- Table structure for table `orders`
---
 CREATE TABLE IF NOT EXISTS `orders` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `order_tracking_number` varchar(255) DEFAULT NULL,
@@ -50,17 +40,13 @@ CREATE TABLE IF NOT EXISTS `orders` (
   `date_created` datetime(6) DEFAULT NULL,
   `last_updated` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  -- UNIQUE KEY `UK_billing_address_id` (`billing_address_id`),
-  -- UNIQUE KEY `UK_shipping_address_id` (`shipping_address_id`),
-  -- KEY `K_customer_id` (`customer_id`),
+  CONSTRAINT `UK_billing_address_id` UNIQUE (`billing_address_id`),
+  CONSTRAINT `UK_shipping_address_id` UNIQUE (`shipping_address_id`),
   CONSTRAINT `FK_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`id`),
   CONSTRAINT `FK_billing_address_id` FOREIGN KEY (`billing_address_id`) REFERENCES `address` (`id`),
   CONSTRAINT `FK_shipping_address_id` FOREIGN KEY (`shipping_address_id`) REFERENCES `address` (`id`)
 );
 
---
--- Table structure for table `order_items`
---
 CREATE TABLE IF NOT EXISTS `order_item` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `image_url` varchar(255) DEFAULT NULL,
@@ -68,8 +54,7 @@ CREATE TABLE IF NOT EXISTS `order_item` (
   `unit_price` decimal(19,2) DEFAULT NULL,
   `order_id` bigint DEFAULT NULL,
   `product_id` bigint DEFAULT NULL,
-  -- PRIMARY KEY (`id`),
-  -- KEY `K_order_id` (`order_id`),
+  PRIMARY KEY (`id`),
   CONSTRAINT `FK_order_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`),
   CONSTRAINT `FK_product_id` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`)
 );

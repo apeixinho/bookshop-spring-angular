@@ -13,4 +13,6 @@ export const environment = {
   oauthClientId: runtime.oauthClientId || 'bookshop-spa',
   oauthScopes: runtime.oauthScopes || 'openid profile bookshop.read bookshop.write',
   oauthRedirectUri: runtime.oauthRedirectUri || 'http://localhost:4200/auth/callback',
+  oauthPostLogoutRedirectUri:
+    runtime.oauthPostLogoutRedirectUri || 'http://localhost:4200/products',
 };

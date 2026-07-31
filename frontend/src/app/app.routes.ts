@@ -17,6 +17,11 @@ export const routes: Routes = [
     loadComponent: () => import('./checkout/checkout-page').then((m) => m.CheckoutPage),
   },
   {
+    path: 'account',
+    canActivate: [authGuard],
+    loadComponent: () => import('./account/account-page').then((m) => m.AccountPage),
+  },
+  {
     path: 'auth/callback',
     loadComponent: () => import('./auth/auth-callback.page').then((m) => m.AuthCallbackPage),
   },

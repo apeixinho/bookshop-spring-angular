@@ -77,6 +77,10 @@ testem.log
 .env.production.local
 .env.local
 
+### Auth-server persisted JWKs ###
+/**/data/auth-jwk.json
+auth-server/data/
+
 ### OS / IDE ###
 .DS_Store
 Thumbs.db
