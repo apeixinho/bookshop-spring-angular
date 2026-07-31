@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Optional<Order> findByOrderTrackingNumber(String orderTrackingNumber);
+
+    Optional<Order> findByCustomerIdAndIdempotencyKey(Long customerId, String idempotencyKey);
 }

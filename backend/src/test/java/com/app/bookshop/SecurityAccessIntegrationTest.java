@@ -38,7 +38,9 @@ class SecurityAccessIntegrationTest {
     @Test
     void checkoutInvalidBodyReturns400() throws Exception {
         mockMvc.perform(post("/api/v1/checkout/purchase")
-                .with(jwt().jwt(j -> j.claim("scope", "bookshop.write")).authorities(() -> "SCOPE_bookshop.write"))
+                .with(jwt().jwt(j -> j.subject("user-1").claim("scope", "bookshop.write"))
+                    .authorities(() -> "SCOPE_bookshop.write"))
+                .header("Idempotency-Key", "test-key-invalid-body")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}"))
             .andExpect(status().isBadRequest());
@@ -50,14 +52,16 @@ class SecurityAccessIntegrationTest {
             {
               "customer":{"firstName":"Ada","lastName":"Lovelace","email":"ada@example.com"},
               "orderItems":[{"quantity":1,"productId":1}],
-              "shippingAddress":{"street":"1 St","city":"London","state":"ENG","country":"UK","zipCode":"E1"},
-              "billingAddress":{"street":"1 St","city":"London","state":"ENG","country":"UK","zipCode":"E1"},
+              "shippingAddress":{"street":"1 St","city":"Lisbon","stateId":224,"countryCode":"PT","zipCode":"1000"},
+              "billingAddress":{"street":"1 St","city":"Lisbon","stateId":224,"countryCode":"PT","zipCode":"1000"},
               "currencyCode":"USD"
             }
             """;
 
         mockMvc.perform(post("/api/v1/checkout/purchase")
-                .with(jwt().jwt(j -> j.claim("scope", "bookshop.write")).authorities(() -> "SCOPE_bookshop.write"))
+                .with(jwt().jwt(j -> j.subject("user-ada").claim("scope", "bookshop.write"))
+                    .authorities(() -> "SCOPE_bookshop.write"))
+                .header("Idempotency-Key", "test-key-checkout-ok")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(body))
             .andExpect(status().isOk());

@@ -6,12 +6,12 @@ Greenfield monorepo: Angular 21 storefront, Spring Boot resource server, and Spr
 
 | Path | Role |
 |------|------|
-| `frontend/` | Angular 21 SPA (Material, signals, PKCE + refresh) |
-| `backend/` | Bookshop API (OAuth2 resource server, Flyway) |
+| `frontend/` | Angular 21 SPA (signals, PKCE + refresh, locale/FX) |
+| `backend/` | Bookshop API (OAuth2 resource server, Flyway, translation tables) |
 | `auth-server/` | Spring Authorization Server (issuer `http://localhost:9000`) |
 | `compose.dev.yml` | Local stack (H2, in-memory auth users) |
 | `compose.staging.yml` | Staging-like stack (MariaDB for API + auth) |
-| `docs/` | Living plan, ADR, OpenAPI |
+| `docs/` | Environments, ADR, OpenAPI |
 
 ## Quick start (local JVM)
 
@@ -32,7 +32,7 @@ cd frontend && npm start
 
 Demo logins (local/dev/staging seed only): `user` / `password`, `admin` / `password`.
 
-Catalog GETs are public. Checkout requires PKCE login and scope `bookshop.write`. The API recalculates line prices from the catalog (client totals are ignored); payment/stock remain mocked (`PENDING`).
+Catalog GETs are public (`?lang=` for translated names). Checkout requires PKCE login and scope `bookshop.write`, plus an `Idempotency-Key` header. The API binds the order to the JWT `sub`, builds lines from `{productId, quantity}`, prices from catalog USD × fixed FX rates for `currencyCode`, upserts the customer by oauth subject, and decrements stock atomically. Payment status is mocked as `PENDING`.
 
 ## Docker Compose
 
@@ -64,11 +64,11 @@ Catalog `image_url` values are relative (`assets/images/products/...`). Files li
 
 - JWT audience `bookshop-api` is set by the auth-server and validated by the backend (`spring.security.oauth2.resourceserver.jwt.audiences`).
 - SPA stores access + refresh tokens and refreshes ~30s before expiry (no `silent-renew.html`; that redirect was removed).
+- Auth-server persists the RSA JWK under `bookshop.auth.jwk-path` (default `./data/auth-jwk.json`) so restarts keep accepting issued tokens.
 - Staging auth uses MariaDB database `bookshop_auth` (Flyway + JDBC users/clients). Dev uses in-memory beans (`@Profile("!staging")`).
 
 ## Docs
 
-- [Environments](docs/ENVIRONMENTS.md) — dev vs staging, MariaDB, Flyway
-- [Modernization plan](docs/MODERNIZATION-PLAN.md)
+- [Environments](docs/ENVIRONMENTS.md) — dev vs staging, MariaDB, Flyway, JWK
 - [ADR-001 Auth](docs/ADR-001-auth.md)
-- [OpenAPI](docs/openapi.yaml)
+- [OpenAPI](docs/openapi.yaml) — path sketch; request schemas lag the live checkout DTO

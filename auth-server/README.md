@@ -14,9 +14,10 @@ Demo accounts (seed only): `user` / `password`, `admin` / `password`.
 ## Contract
 
 - Issuer: `AUTH_ISSUER_URI` (default `http://localhost:9000`)
-- Client: `bookshop-spa` (public, PKCE, refresh_token)
+- Client: `bookshop-spa` (public, PKCE, refresh_token); redirect/post-logout URIs for each comma-separated `FRONTEND_ORIGIN`
 - Audience claim: `bookshop-api`
 - Scopes: `openid`, `profile`, `bookshop.read`, `bookshop.write`
+- Signing key: RSA JWK at `bookshop.auth.jwk-path` / `AUTH_JWK_PATH` (generated once if missing)
 
 ## Run
 

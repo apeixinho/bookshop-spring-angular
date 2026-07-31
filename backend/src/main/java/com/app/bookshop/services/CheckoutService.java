@@ -5,5 +5,5 @@ import com.app.bookshop.dto.PurchaseResponse;
 
 public interface CheckoutService {
 
-    PurchaseResponse placeOrder(Purchase purchase);
+    PurchaseResponse placeOrder(Purchase purchase, String oauthSub, String idempotencyKey);
 }

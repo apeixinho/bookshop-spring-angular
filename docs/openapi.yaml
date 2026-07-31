@@ -2,13 +2,16 @@ openapi: 3.0.3
 info:
   title: Bookshop API
   version: 1.0.0
-  description: Catalog is public; checkout requires Bearer JWT with scope bookshop.write.
+  description: >
+    Catalog is public (`lang` selects translation locale with English fallback).
+    Checkout requires Bearer JWT with scope bookshop.write. Catalog unit prices
+    are USD; checkout converts with fixed rates for currencyCode.
 servers:
   - url: http://localhost:8090
 paths:
   /api/v1/products:
     get:
-      summary: List products
+      summary: List active products
       security: []
       parameters:
         - in: query
@@ -17,6 +20,9 @@ paths:
         - in: query
           name: size
           schema: { type: integer, default: 5 }
+        - in: query
+          name: lang
+          schema: { type: string, enum: [en, pt, de, tr] }
       responses:
         '200':
           description: Page of products
@@ -29,30 +35,54 @@ paths:
           name: id
           required: true
           schema: { type: integer }
+        - in: query
+          name: lang
+          schema: { type: string, enum: [en, pt, de, tr] }
       responses:
         '200':
-          description: Product
+          description: Product (empty body/optional when missing — prefer treating as not found)
   /api/v1/products/search/findByNameContaining:
     get:
-      summary: Search products by name
+      summary: Search products by name (any translation) or SKU
       security: []
       parameters:
         - in: query
           name: name
           required: true
           schema: { type: string }
+        - in: query
+          name: categoryId
+          schema: { type: integer }
+        - in: query
+          name: page
+          schema: { type: integer, default: 0 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 5 }
+        - in: query
+          name: lang
+          schema: { type: string, enum: [en, pt, de, tr] }
       responses:
         '200':
           description: Page of products
   /api/v1/products/search/findByCategoryId:
     get:
-      summary: Search products by category
+      summary: Search active products by category
       security: []
       parameters:
         - in: query
           name: id
           required: true
           schema: { type: integer }
+        - in: query
+          name: page
+          schema: { type: integer, default: 0 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 5 }
+        - in: query
+          name: lang
+          schema: { type: string, enum: [en, pt, de, tr] }
       responses:
         '200':
           description: Page of products
@@ -60,6 +90,10 @@ paths:
     get:
       summary: List categories
       security: []
+      parameters:
+        - in: query
+          name: lang
+          schema: { type: string, enum: [en, pt, de, tr] }
       responses:
         '200':
           description: Categories
@@ -67,6 +101,10 @@ paths:
     get:
       summary: List countries
       security: []
+      parameters:
+        - in: query
+          name: lang
+          schema: { type: string, enum: [en, pt, de, tr] }
       responses:
         '200':
           description: Countries
@@ -79,23 +117,44 @@ paths:
           name: code
           required: true
           schema: { type: string }
+        - in: query
+          name: lang
+          schema: { type: string, enum: [en, pt, de, tr] }
       responses:
         '200':
           description: States
+  /api/v1/currency/rates:
+    get:
+      summary: Fixed USD→currency demo rates used for display and checkout
+      security: []
+      responses:
+        '200':
+          description: Map of currency code to multiplier from USD
   /api/v1/checkout/purchase:
     post:
-      summary: Place order
+      summary: Place order (server prices lines; client totals ignored)
       security:
         - bearerAuth: []
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: { type: string, maxLength: 64 }
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/Purchase'
       responses:
         '200':
           description: Purchase response with tracking number
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurchaseResponse'
+        '400':
+          description: Validation, inactive product, or insufficient stock
         '401':
           description: Missing or invalid JWT
 components:
@@ -104,3 +163,49 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  schemas:
+    Purchase:
+      type: object
+      required: [customer, shippingAddress, billingAddress, orderItems, currencyCode]
+      properties:
+        customer:
+          $ref: '#/components/schemas/CustomerRequest'
+        shippingAddress:
+          $ref: '#/components/schemas/AddressRequest'
+        billingAddress:
+          $ref: '#/components/schemas/AddressRequest'
+        orderItems:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/OrderItemRequest'
+        currencyCode:
+          type: string
+          enum: [USD, EUR, CAD, BRL, INR, TRY]
+    CustomerRequest:
+      type: object
+      required: [firstName, lastName, email]
+      properties:
+        firstName: { type: string }
+        lastName: { type: string }
+        email: { type: string, format: email }
+    AddressRequest:
+      type: object
+      required: [street, city, stateId, countryCode, zipCode]
+      properties:
+        street: { type: string }
+        city: { type: string }
+        stateId: { type: integer }
+        countryCode: { type: string }
+        zipCode: { type: string }
+    OrderItemRequest:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId: { type: integer, format: int64 }
+        quantity: { type: integer, minimum: 1 }
+    PurchaseResponse:
+      type: object
+      required: [orderTrackingNumber]
+      properties:
+        orderTrackingNumber: { type: string }

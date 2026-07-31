@@ -13,6 +13,7 @@ public interface ProductMapper {
 
     @Mapping(target = "category", ignore = true)
     @Mapping(target = "translations", ignore = true)
+    @Mapping(target = "version", ignore = true)
     Product productDtoToProduct(ProductDTO p);
 
     @Mapping(target = "name", expression = "java(com.app.bookshop.i18n.TranslationResolver.productName(p, lang))")

@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Country, Page, Product, ProductCategory, State } from './models';
 import { environment } from '../../environments/environment';
@@ -62,8 +62,17 @@ export class CatalogApiService {
     return this.http.get<State[]>(`${this.base}/states/search/findByCountryCode`, { params });
   }
 
-  purchase(body: unknown): Observable<{ orderTrackingNumber: string }> {
-    return this.http.post<{ orderTrackingNumber: string }>(`${this.base}/checkout/purchase`, body);
+  getCurrencyRates(): Observable<Record<string, number>> {
+    return this.http.get<Record<string, number>>(`${this.base}/currency/rates`);
+  }
+
+  purchase(
+    body: unknown,
+    idempotencyKey: string,
+  ): Observable<{ orderTrackingNumber: string }> {
+    return this.http.post<{ orderTrackingNumber: string }>(`${this.base}/checkout/purchase`, body, {
+      headers: new HttpHeaders({ 'Idempotency-Key': idempotencyKey }),
+    });
   }
 
   private withLang(params: HttpParams): HttpParams {

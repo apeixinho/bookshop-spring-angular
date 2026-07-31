@@ -24,26 +24,27 @@ public class Customer {
     private Long id;
 
     @NotBlank
-    @Column(name = "first_name")
+    @Column(name = "first_name", nullable = false)
     private String firstName;
 
     @NotBlank
-    @Column(name = "last_name")
+    @Column(name = "last_name", nullable = false)
     private String lastName;
 
     @NotBlank
     @Email
-    @Column(name = "email")
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
+
+    @NotBlank
+    @Column(name = "oauth_sub", nullable = false, unique = true)
+    private String oauthSub;
 
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
     private Set<Order> orders = new HashSet<>();
 
     public void add(Order order) {
         if (order != null) {
-            if (orders == null) {
-                orders = new HashSet<>();
-            }
             orders.add(order);
             order.setCustomer(this);
         }
@@ -81,11 +82,15 @@ public class Customer {
         this.email = email;
     }
 
-    public Set<Order> getOrders() {
-        return orders;
+    public String getOauthSub() {
+        return oauthSub;
     }
 
-    public void setOrders(Set<Order> orders) {
-        this.orders = orders;
+    public void setOauthSub(String oauthSub) {
+        this.oauthSub = oauthSub;
+    }
+
+    public Set<Order> getOrders() {
+        return orders;
     }
 }

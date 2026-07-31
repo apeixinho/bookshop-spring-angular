@@ -4,10 +4,19 @@ import { from, switchMap } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { environment } from '../../environments/environment';
 
+function isBookshopApiUrl(url: string): boolean {
+  try {
+    const api = new URL(environment.apiBaseUrl, window.location.origin);
+    const target = new URL(url, window.location.origin);
+    return target.origin === api.origin && target.pathname.startsWith(api.pathname.replace(/\/$/, '') || '/');
+  } catch {
+    return false;
+  }
+}
+
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
-  const isApi = req.url.startsWith(environment.apiBaseUrl);
-  if (!isApi) {
+  if (!isBookshopApiUrl(req.url)) {
     return next(req);
   }
 

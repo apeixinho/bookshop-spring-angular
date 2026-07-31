@@ -42,7 +42,8 @@ public class SecurityConfig {
                     "/api/v1/products", "/api/v1/products/**",
                     "/api/v1/product-category", "/api/v1/product-category/**",
                     "/api/v1/countries", "/api/v1/countries/**",
-                    "/api/v1/states", "/api/v1/states/**"
+                    "/api/v1/states", "/api/v1/states/**",
+                    "/api/v1/currency/**"
                 ).permitAll()
                 .requestMatchers("/api/v1/checkout/**").hasAuthority("SCOPE_bookshop.write")
                 .requestMatchers("/api/**").authenticated()

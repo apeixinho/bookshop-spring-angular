@@ -37,7 +37,7 @@ public class Product {
     @Column(name = "sku")
     private String sku;
 
-    @Column(name = "unit_price")
+    @Column(name = "unit_price", nullable = false)
     private BigDecimal unitPrice;
 
     @Column(name = "image_url")
@@ -46,8 +46,12 @@ public class Product {
     @Column(name = "active")
     private boolean active;
 
-    @Column(name = "units_in_stock")
+    @Column(name = "units_in_stock", nullable = false)
     private int unitsInStock;
+
+    @jakarta.persistence.Version
+    @Column(name = "version", nullable = false)
+    private long version;
 
     @Column(name = "date_created")
     @CreationTimestamp
@@ -117,6 +121,14 @@ public class Product {
         this.unitsInStock = unitsInStock;
     }
 
+    public long getVersion() {
+        return version;
+    }
+
+    public void setVersion(long version) {
+        this.version = version;
+    }
+
     public Date getDateCreated() {
         return dateCreated;
     }
@@ -137,7 +149,10 @@ public class Product {
         return translations;
     }
 
-    public void setTranslations(Set<ProductTranslation> translations) {
-        this.translations = translations;
+    public void addTranslation(ProductTranslation translation) {
+        if (translation != null) {
+            translations.add(translation);
+            translation.setProduct(this);
+        }
     }
 }

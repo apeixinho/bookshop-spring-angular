@@ -7,6 +7,7 @@ import { NotificationService } from './shared/notification.service';
 import { ToastHost } from './shared/toast-host';
 import { LocaleService } from './i18n/locale.service';
 import { CountryCode } from './i18n/locale.models';
+import { CatalogApiService } from './shared/catalog-api.service';
 
 @Component({
   selector: 'app-root',
@@ -373,10 +374,17 @@ export class App implements OnInit {
   readonly auth = inject(AuthService);
   readonly i18n = inject(LocaleService);
   private readonly notifications = inject(NotificationService);
+  private readonly api = inject(CatalogApiService);
 
   ngOnInit(): void {
     document.documentElement.lang = this.i18n.language();
     this.notifications.consumeFlash();
+    this.api.getCurrencyRates().subscribe({
+      next: (rates) => this.i18n.setFxRates(rates),
+      error: () => {
+        /* keep fallback rates */
+      },
+    });
   }
 
   onLocaleChange(code: CountryCode): void {

@@ -43,7 +43,9 @@ const PAGE_SIZE = 8;
       </section>
 
       <section class="grid-wrap page-shell">
-        @if (products().length === 0) {
+        @if (error()) {
+          <p class="empty">{{ error() }}</p>
+        } @else if (products().length === 0) {
           <p class="empty">{{ i18n.t('catalog.empty') }}</p>
         } @else {
           <div class="grid">
@@ -350,6 +352,7 @@ export class ProductsPage {
   readonly pageIndex = signal(0);
   readonly totalPages = signal(0);
   readonly totalElements = signal(0);
+  readonly error = signal<string | null>(null);
 
   search = '';
   categoryId: number | null = null;
@@ -361,7 +364,10 @@ export class ProductsPage {
     effect(() => {
       this.i18n.language();
       untracked(() => {
-        this.api.getCategories().subscribe((categories) => this.categories.set(categories));
+        this.api.getCategories().subscribe({
+          next: (categories) => this.categories.set(categories),
+          error: () => this.error.set(this.i18n.t('catalog.loadFailed')),
+        });
         this.load();
       });
     });
@@ -403,6 +409,7 @@ export class ProductsPage {
     const page = this.pageIndex();
     const query = this.search.trim();
     const seq = ++this.loadSeq;
+    this.error.set(null);
     const request =
       query.length > 0
         ? this.api.searchByName(query, page, PAGE_SIZE, this.categoryId)
@@ -410,10 +417,18 @@ export class ProductsPage {
           ? this.api.searchByCategory(this.categoryId, page, PAGE_SIZE)
           : this.api.getProducts(page, PAGE_SIZE);
 
-    request.subscribe((result) => {
-      if (seq === this.loadSeq) {
-        this.applyPage(result);
-      }
+    request.subscribe({
+      next: (result) => {
+        if (seq === this.loadSeq) {
+          this.applyPage(result);
+        }
+      },
+      error: () => {
+        if (seq === this.loadSeq) {
+          this.products.set([]);
+          this.error.set(this.i18n.t('catalog.loadFailed'));
+        }
+      },
     });
   }
 

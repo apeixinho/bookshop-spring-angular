@@ -4,6 +4,7 @@ import com.app.bookshop.entity.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -30,4 +31,12 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         @Param("name") String name,
         @Param("categoryId") Long categoryId,
         Pageable pageable);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+        UPDATE Product p
+        SET p.unitsInStock = p.unitsInStock - :qty, p.version = p.version + 1
+        WHERE p.id = :id AND p.active = true AND p.unitsInStock >= :qty
+        """)
+    int decrementStockIfAvailable(@Param("id") Long id, @Param("qty") int qty);
 }

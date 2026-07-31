@@ -46,15 +46,21 @@ public class ProductCategory {
         return products;
     }
 
-    public void setProducts(Set<Product> products) {
-        this.products = products;
+    public void addProduct(Product product) {
+        if (product != null) {
+            products.add(product);
+            product.setCategory(this);
+        }
     }
 
     public Set<ProductCategoryTranslation> getTranslations() {
         return translations;
     }
 
-    public void setTranslations(Set<ProductCategoryTranslation> translations) {
-        this.translations = translations;
+    public void addTranslation(ProductCategoryTranslation translation) {
+        if (translation != null) {
+            translations.add(translation);
+            translation.setCategory(this);
+        }
     }
 }

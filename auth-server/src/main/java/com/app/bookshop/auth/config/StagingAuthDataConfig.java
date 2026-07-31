@@ -14,6 +14,7 @@ import org.springframework.security.oauth2.server.authorization.JdbcOAuth2Author
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.JdbcRegisteredClientRepository;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.provisioning.JdbcUserDetailsManager;
 
@@ -61,9 +62,29 @@ public class StagingAuthDataConfig {
     @Bean
     ApplicationRunner seedSpaClient(RegisteredClientRepository clients) {
         return args -> {
-            if (clients.findByClientId(clientId) == null) {
-                clients.save(DevAuthDataConfig.spaClient(clientId, frontendOrigin));
+            RegisteredClient desired = DevAuthDataConfig.spaClient(clientId, frontendOrigin);
+            RegisteredClient existing = clients.findByClientId(clientId);
+            if (existing == null) {
+                clients.save(desired);
+                return;
             }
+            // Reconcile redirect URIs / settings when FRONTEND_ORIGIN or scopes change.
+            clients.save(RegisteredClient.from(existing)
+                .redirectUris(uris -> {
+                    uris.clear();
+                    uris.addAll(desired.getRedirectUris());
+                })
+                .postLogoutRedirectUris(uris -> {
+                    uris.clear();
+                    uris.addAll(desired.getPostLogoutRedirectUris());
+                })
+                .scopes(scopes -> {
+                    scopes.clear();
+                    scopes.addAll(desired.getScopes());
+                })
+                .clientSettings(desired.getClientSettings())
+                .tokenSettings(desired.getTokenSettings())
+                .build());
         };
     }
 }

@@ -114,7 +114,7 @@ import { LocaleService } from '../i18n/locale.service';
                 <li>
                   <span>{{ item.product.name }} × {{ item.quantity }}</span>
                   <span class="mono">{{
-                    i18n.toDisplayMoney(item.product.unitPrice * item.quantity)
+                    i18n.lineTotal(item.product.unitPrice, item.quantity)
                       | currency
                         : i18n.currencyCode()
                         : 'symbol'
@@ -365,6 +365,7 @@ export class CheckoutPage {
   readonly trackingNumber = signal<string | null>(null);
   readonly error = signal<string | null>(null);
   readonly submitting = signal(false);
+  private geoSeq = 0;
 
   readonly form = this.fb.nonNullable.group({
     firstName: ['', Validators.required],
@@ -381,16 +382,23 @@ export class CheckoutPage {
     effect(() => {
       this.i18n.language();
       untracked(() => {
-        this.api.getCountries().subscribe((countries) => this.countries.set(countries));
+        const langSeq = ++this.geoSeq;
+        this.api.getCountries().subscribe({
+          next: (countries) => {
+            if (langSeq === this.geoSeq) {
+              this.countries.set(countries);
+            }
+          },
+          error: () => {
+            if (langSeq === this.geoSeq) {
+              this.error.set(this.i18n.t('checkout.loadFailed'));
+            }
+          },
+        });
         const code = this.form.controls.country.value;
         const stateId = this.form.controls.state.value;
         if (code) {
-          this.api.getStates(code).subscribe((states) => {
-            this.states.set(states);
-            if (stateId && !states.some((s) => String(s.id) === String(stateId))) {
-              this.form.controls.state.setValue('');
-            }
-          });
+          this.loadStates(code, stateId, langSeq);
         }
       });
     });
@@ -398,7 +406,7 @@ export class CheckoutPage {
 
   onCountry(code: string): void {
     this.form.controls.state.setValue('');
-    this.api.getStates(code).subscribe((states) => this.states.set(states));
+    this.loadStates(code, '', ++this.geoSeq);
   }
 
   submit(): void {
@@ -408,12 +416,17 @@ export class CheckoutPage {
     this.submitting.set(true);
     this.error.set(null);
     const value = this.form.getRawValue();
-    const selectedState = this.states().find((s) => String(s.id) === String(value.state));
+    const stateId = Number(value.state);
+    if (!Number.isFinite(stateId)) {
+      this.error.set(this.i18n.t('checkout.purchaseFailed'));
+      this.submitting.set(false);
+      return;
+    }
     const address = {
       street: value.street,
       city: value.city,
-      state: selectedState?.name ?? '',
-      country: value.country,
+      stateId,
+      countryCode: value.country,
       zipCode: value.zipCode,
     };
     const body = {
@@ -431,7 +444,8 @@ export class CheckoutPage {
       currencyCode: this.i18n.currencyCode(),
     };
 
-    this.api.purchase(body).subscribe({
+    const idempotencyKey = crypto.randomUUID();
+    this.api.purchase(body, idempotencyKey).subscribe({
       next: (response) => {
         this.trackingNumber.set(response.orderTrackingNumber);
         this.cart.clearCart();
@@ -440,6 +454,26 @@ export class CheckoutPage {
       error: () => {
         this.error.set(this.i18n.t('checkout.purchaseFailed'));
         this.submitting.set(false);
+      },
+    });
+  }
+
+  private loadStates(code: string, stateId: string, seq: number): void {
+    this.api.getStates(code).subscribe({
+      next: (states) => {
+        if (seq !== this.geoSeq) {
+          return;
+        }
+        this.states.set(states);
+        if (stateId && !states.some((s) => String(s.id) === String(stateId))) {
+          this.form.controls.state.setValue('');
+        }
+      },
+      error: () => {
+        if (seq === this.geoSeq) {
+          this.states.set([]);
+          this.error.set(this.i18n.t('checkout.loadFailed'));
+        }
       },
     });
   }

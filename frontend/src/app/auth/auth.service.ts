@@ -19,9 +19,8 @@ export interface AuthUser {
   subject: string;
 }
 
-const PKCE_VERIFIER_KEY = 'bookshop.pkce.verifier';
-const OAUTH_STATE_KEY = 'bookshop.oauth.state';
-const ACCESS_TOKEN_KEY = 'bookshop.access_token';
+const PKCE_VERIFIER_PREFIX = 'bookshop.pkce.verifier.';
+const OAUTH_RETURN_PREFIX = 'bookshop.oauth.return.';
 const ID_TOKEN_KEY = 'bookshop.id_token';
 const REFRESH_TOKEN_KEY = 'bookshop.refresh_token';
 const EXPIRES_AT_KEY = 'bookshop.expires_at';
@@ -35,10 +34,10 @@ export class AuthService {
   private readonly router = inject(Router);
   private readonly i18n = inject(LocaleService);
 
-  private readonly accessToken = signal<string | null>(this.readStoredToken());
-  private readonly idToken = signal<string | null>(localStorage.getItem(ID_TOKEN_KEY));
+  /** Access token stays in memory only (reduces XSS blast radius vs localStorage). */
+  private readonly accessToken = signal<string | null>(null);
+  private readonly idToken = signal<string | null>(sessionStorage.getItem(ID_TOKEN_KEY));
   private refreshInFlight: Promise<string | null> | null = null;
-  /** Bumped on logout so in-flight refresh cannot restore the session. */
   private sessionEpoch = 0;
 
   readonly isAuthenticated = computed(() => !!this.accessToken() && !this.isExpired());
@@ -60,6 +59,13 @@ export class AuthService {
     return { username, subject };
   });
 
+  constructor() {
+    // Restore session from refresh token after reload.
+    if (sessionStorage.getItem(REFRESH_TOKEN_KEY)) {
+      void this.ensureValidAccessToken();
+    }
+  }
+
   getAccessToken(): string | null {
     if (this.isExpired()) {
       return null;
@@ -67,12 +73,11 @@ export class AuthService {
     return this.accessToken();
   }
 
-  /** Returns a valid access token, refreshing when close to expiry or already expired. */
   async ensureValidAccessToken(): Promise<string | null> {
     if (this.accessToken() && !this.needsRefresh()) {
       return this.accessToken();
     }
-    const refresh = localStorage.getItem(REFRESH_TOKEN_KEY);
+    const refresh = sessionStorage.getItem(REFRESH_TOKEN_KEY);
     if (!refresh) {
       if (this.isExpired()) {
         this.clearSession();
@@ -86,8 +91,8 @@ export class AuthService {
     const verifier = this.createVerifier();
     const challenge = await this.createChallenge(verifier);
     const state = crypto.randomUUID();
-    sessionStorage.setItem(PKCE_VERIFIER_KEY, verifier);
-    sessionStorage.setItem(OAUTH_STATE_KEY, JSON.stringify({ state, returnUrl }));
+    sessionStorage.setItem(PKCE_VERIFIER_PREFIX + state, verifier);
+    sessionStorage.setItem(OAUTH_RETURN_PREFIX + state, returnUrl);
 
     const params = new HttpParams()
       .set('response_type', 'code')
@@ -103,43 +108,38 @@ export class AuthService {
   }
 
   async handleCallback(code: string, state: string): Promise<void> {
-    const stored = sessionStorage.getItem(OAUTH_STATE_KEY);
-    const verifier = sessionStorage.getItem(PKCE_VERIFIER_KEY);
-    if (!stored || !verifier) {
-      throw new Error('Missing PKCE session');
+    const verifier = sessionStorage.getItem(PKCE_VERIFIER_PREFIX + state);
+    const returnUrl = sessionStorage.getItem(OAUTH_RETURN_PREFIX + state) || '/checkout';
+    try {
+      if (!verifier) {
+        throw new Error('Missing PKCE session');
+      }
+
+      const body = new HttpParams()
+        .set('grant_type', 'authorization_code')
+        .set('code', code)
+        .set('redirect_uri', environment.oauthRedirectUri)
+        .set('client_id', environment.oauthClientId)
+        .set('code_verifier', verifier);
+
+      const token = await firstValueFrom(
+        this.http.post<TokenResponse>(`${environment.authIssuer}/oauth2/token`, body.toString(), {
+          headers: new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }),
+        }),
+      );
+
+      this.persistTokens(token);
+      await this.router.navigateByUrl(returnUrl);
+    } finally {
+      sessionStorage.removeItem(PKCE_VERIFIER_PREFIX + state);
+      sessionStorage.removeItem(OAUTH_RETURN_PREFIX + state);
     }
-    const parsed = JSON.parse(stored) as { state: string; returnUrl: string };
-    if (parsed.state !== state) {
-      throw new Error('Invalid OAuth state');
-    }
-
-    const body = new HttpParams()
-      .set('grant_type', 'authorization_code')
-      .set('code', code)
-      .set('redirect_uri', environment.oauthRedirectUri)
-      .set('client_id', environment.oauthClientId)
-      .set('code_verifier', verifier);
-
-    const token = await firstValueFrom(
-      this.http.post<TokenResponse>(`${environment.authIssuer}/oauth2/token`, body.toString(), {
-        headers: new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }),
-      }),
-    );
-
-    sessionStorage.removeItem(PKCE_VERIFIER_KEY);
-    sessionStorage.removeItem(OAUTH_STATE_KEY);
-    this.persistTokens(token);
-    await this.router.navigateByUrl(parsed.returnUrl || '/checkout');
   }
 
-  /**
-   * Clears SPA tokens and ends the auth-server session (OIDC RP-initiated logout).
-   * Without the IdP logout, Sign in would silently re-authenticate via the SSO cookie.
-   */
   logout(): void {
     this.sessionEpoch++;
     this.refreshInFlight = null;
-    const idToken = localStorage.getItem(ID_TOKEN_KEY) ?? this.idToken();
+    const idToken = sessionStorage.getItem(ID_TOKEN_KEY) ?? this.idToken();
     this.clearSession();
     sessionStorage.setItem(FLASH_KEY, 'toast.signedOut');
 
@@ -192,22 +192,24 @@ export class AuthService {
   }
 
   private persistTokens(token: TokenResponse): void {
-    localStorage.setItem(ACCESS_TOKEN_KEY, token.access_token);
+    this.accessToken.set(token.access_token);
     if (token.id_token) {
-      localStorage.setItem(ID_TOKEN_KEY, token.id_token);
+      sessionStorage.setItem(ID_TOKEN_KEY, token.id_token);
       this.idToken.set(token.id_token);
     }
     if (token.refresh_token) {
-      localStorage.setItem(REFRESH_TOKEN_KEY, token.refresh_token);
+      sessionStorage.setItem(REFRESH_TOKEN_KEY, token.refresh_token);
     }
-    // Store true expiry; skew is applied only in needsRefresh / ensureValidAccessToken.
     const expiresAt = Date.now() + Math.max(token.expires_in, 60) * 1000;
-    localStorage.setItem(EXPIRES_AT_KEY, String(expiresAt));
-    this.accessToken.set(token.access_token);
+    sessionStorage.setItem(EXPIRES_AT_KEY, String(expiresAt));
   }
 
   private clearSession(): void {
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    sessionStorage.removeItem(ID_TOKEN_KEY);
+    sessionStorage.removeItem(REFRESH_TOKEN_KEY);
+    sessionStorage.removeItem(EXPIRES_AT_KEY);
+    // Migrate away from legacy localStorage tokens if present.
+    localStorage.removeItem('bookshop.access_token');
     localStorage.removeItem(ID_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(EXPIRES_AT_KEY);
@@ -216,24 +218,19 @@ export class AuthService {
   }
 
   private isExpired(): boolean {
-    const raw = localStorage.getItem(EXPIRES_AT_KEY);
+    const raw = sessionStorage.getItem(EXPIRES_AT_KEY);
     if (!raw) {
-      // No expiry metadata (legacy) — require a fresh login when a token is present
       return this.accessToken() != null;
     }
     return Date.now() >= Number(raw);
   }
 
   private needsRefresh(): boolean {
-    const raw = localStorage.getItem(EXPIRES_AT_KEY);
+    const raw = sessionStorage.getItem(EXPIRES_AT_KEY);
     if (!raw) {
       return this.accessToken() != null;
     }
     return Date.now() >= Number(raw) - EXPIRY_SKEW_MS;
-  }
-
-  private readStoredToken(): string | null {
-    return localStorage.getItem(ACCESS_TOKEN_KEY);
   }
 
   private decodeClaims(token: string | null): Record<string, unknown> | null {

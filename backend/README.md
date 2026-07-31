@@ -15,7 +15,7 @@ Spring Boot 3.4 OAuth2 resource server for the Bookshop catalog and checkout API
 | `dev` / `test` | H2 | `classpath:db/migration/h2` |
 | `staging` | MariaDB `bookshop_db` | `classpath:db/migration/mariadb` |
 
-H2 V4 is intentionally weaker than MariaDB V4 (indexes/unique keys). See [docs/ENVIRONMENTS.md](../docs/ENVIRONMENTS.md).
+H2 and MariaDB V4 share unique keys and FKs; MariaDB adds a few secondary indexes. See [docs/ENVIRONMENTS.md](../docs/ENVIRONMENTS.md).
 
 ## Run
 

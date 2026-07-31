@@ -72,9 +72,13 @@ public final class TranslationResolver {
         if (requested.isPresent()) {
             return requested;
         }
-        return translations.stream()
+        Optional<String> fallback = translations.stream()
             .filter(t -> Objects.equals(localeFn.apply(t), SupportedLocale.DEFAULT))
             .map(valueFn)
             .findFirst();
+        if (fallback.isEmpty()) {
+            return Optional.of("[missing translation]");
+        }
+        return fallback;
     }
 }

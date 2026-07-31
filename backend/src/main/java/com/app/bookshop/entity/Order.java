@@ -11,6 +11,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -29,17 +31,27 @@ public class Order {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "order_tracking_number")
+    @Column(name = "order_tracking_number", nullable = false, unique = true)
     private String orderTrackingNumber;
 
-    @Column(name = "total_quantity")
+    @Column(name = "total_quantity", nullable = false)
     private int totalQuantity;
 
-    @Column(name = "total_price")
+    @Column(name = "total_price", nullable = false)
     private BigDecimal totalPrice;
 
-    @Column(name = "status")
-    private String status;
+    @Column(name = "currency_code", nullable = false, length = 8)
+    private String currencyCode;
+
+    @Column(name = "fx_rate", nullable = false, precision = 19, scale = 6)
+    private BigDecimal fxRate;
+
+    @Column(name = "idempotency_key", nullable = false, length = 64)
+    private String idempotencyKey;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 32)
+    private OrderStatus status;
 
     @Column(name = "date_created")
     @CreationTimestamp
@@ -53,22 +65,19 @@ public class Order {
     private Set<OrderItem> orderItems = new HashSet<>();
 
     @ManyToOne
-    @JoinColumn(name = "customer_id")
+    @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
     @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "shipping_address_id", referencedColumnName = "id")
+    @JoinColumn(name = "shipping_address_id", referencedColumnName = "id", nullable = false)
     private Address shippingAddress;
 
     @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "billing_address_id", referencedColumnName = "id")
+    @JoinColumn(name = "billing_address_id", referencedColumnName = "id", nullable = false)
     private Address billingAddress;
 
     public void add(OrderItem item) {
         if (item != null) {
-            if (orderItems == null) {
-                orderItems = new HashSet<>();
-            }
             orderItems.add(item);
             item.setOrder(this);
         }
@@ -106,11 +115,35 @@ public class Order {
         this.totalPrice = totalPrice;
     }
 
-    public String getStatus() {
+    public String getCurrencyCode() {
+        return currencyCode;
+    }
+
+    public void setCurrencyCode(String currencyCode) {
+        this.currencyCode = currencyCode;
+    }
+
+    public BigDecimal getFxRate() {
+        return fxRate;
+    }
+
+    public void setFxRate(BigDecimal fxRate) {
+        this.fxRate = fxRate;
+    }
+
+    public String getIdempotencyKey() {
+        return idempotencyKey;
+    }
+
+    public void setIdempotencyKey(String idempotencyKey) {
+        this.idempotencyKey = idempotencyKey;
+    }
+
+    public OrderStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(OrderStatus status) {
         this.status = status;
     }
 
@@ -132,10 +165,6 @@ public class Order {
 
     public Set<OrderItem> getOrderItems() {
         return orderItems;
-    }
-
-    public void setOrderItems(Set<OrderItem> orderItems) {
-        this.orderItems = orderItems;
     }
 
     public Customer getCustomer() {

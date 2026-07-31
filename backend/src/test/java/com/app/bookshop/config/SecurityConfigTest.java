@@ -46,7 +46,9 @@ class SecurityConfigTest {
     @Test
     void checkoutPostWithJwtIsNotUnauthorizedBySecurity() throws Exception {
         var result = mockMvc.perform(post("/api/v1/checkout/purchase")
-                .with(jwt().authorities(new SimpleGrantedAuthority("SCOPE_bookshop.write")))
+                .with(jwt().jwt(j -> j.subject("user-ada"))
+                    .authorities(new SimpleGrantedAuthority("SCOPE_bookshop.write")))
+                .header("Idempotency-Key", "security-config-test-key")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {
@@ -57,17 +59,17 @@ class SecurityConfigTest {
                       },
                       "shippingAddress": {
                         "street": "1 Analytical Engine Way",
-                        "city": "London",
-                        "state": "ENG",
-                        "country": "UK",
-                        "zipCode": "SW1A"
+                        "city": "Lisbon",
+                        "stateId": 224,
+                        "countryCode": "PT",
+                        "zipCode": "1000"
                       },
                       "billingAddress": {
                         "street": "1 Analytical Engine Way",
-                        "city": "London",
-                        "state": "ENG",
-                        "country": "UK",
-                        "zipCode": "SW1A"
+                        "city": "Lisbon",
+                        "stateId": 224,
+                        "countryCode": "PT",
+                        "zipCode": "1000"
                       },
                       "orderItems": [
                         {

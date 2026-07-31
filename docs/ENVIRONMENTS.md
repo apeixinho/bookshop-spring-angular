@@ -4,7 +4,7 @@
 
 | Service | Storage | Notes |
 |---------|---------|--------|
-| auth-server | In-memory users + clients | Profile `!staging` (`DevAuthDataConfig`) |
+| auth-server | In-memory users + clients | Profile `!staging` (`DevAuthDataConfig`); JWK file at `bookshop.auth.jwk-path` (default `./data/auth-jwk.json`) |
 | backend | H2 (`classpath:db/migration/h2`) | Profile `dev` |
 | frontend | `ng serve` in container | Writes `/env.js` at start |
 
@@ -39,6 +39,8 @@ docker compose -f compose.staging.yml down -v
 docker compose -f compose.staging.yml up --build
 ```
 
+Persist the auth-server JWK across container recreation (e.g. bind-mount `AUTH_JWK_PATH` / `./data`) or issued tokens become invalid after restart.
+
 ## H2 vs MariaDB Flyway V4
 
 Backend keeps **separate** migration trees:
@@ -46,7 +48,7 @@ Backend keeps **separate** migration trees:
 - `backend/src/main/resources/db/migration/h2/`
 - `backend/src/main/resources/db/migration/mariadb/`
 
-`V4__create-order-tables.sql` intentionally differs: H2 omits some unique keys / secondary indexes that MariaDB staging retains. Treat H2 as a **weaker local schema** for unit/integration tests and Compose dev—not a byte-for-byte match of staging. Prefer `compose.staging.yml` when validating constraints.
+`V4__create-order-tables.sql` aligns unique keys (`customer.email`, billing/shipping address IDs) and FKs on both dialects. MariaDB also declares a few explicit secondary indexes that H2 omits. Prefer `compose.staging.yml` when validating MariaDB-specific index behavior.
 
 ## JWT audience
 
@@ -60,4 +62,4 @@ Compose passes `OAUTH_AUDIENCE` to both services.
 
 ## SPA tokens
 
-`AuthService` persists access token, refresh token, and expiry; `ensureValidAccessToken()` refreshes before calls. There is no iframe silent-renew page; refresh_token grant is the renewal path.
+`AuthService` persists access token, refresh token, and true expiry in `localStorage`; skew applies only when deciding to refresh. `authGuard` / `ensureValidAccessToken()` renew via the refresh_token grant (no iframe silent-renew page).

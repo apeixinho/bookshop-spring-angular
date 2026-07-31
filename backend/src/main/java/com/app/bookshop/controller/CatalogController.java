@@ -1,7 +1,7 @@
 package com.app.bookshop.controller;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import com.app.bookshop.i18n.SupportedLocale;
@@ -17,6 +17,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class CatalogController {
 
+    private static final int MAX_PAGE_SIZE = 50;
     private static final String LOCALE_KEY =
         "T(com.app.bookshop.i18n.SupportedLocale).normalize(#lang)";
 
@@ -54,7 +57,7 @@ public class CatalogController {
         @RequestParam(required = false) String lang) {
 
         String locale = SupportedLocale.normalize(lang);
-        Pageable currentPage = PageRequest.of(page, size);
+        Pageable currentPage = pageRequest(page, size);
 
         return catalogService
             .findByCategoryId(id, currentPage)
@@ -73,10 +76,14 @@ public class CatalogController {
         @RequestParam(required = false) String lang) {
 
         String locale = SupportedLocale.normalize(lang);
-        Pageable currentPage = PageRequest.of(page, size);
+        String normalizedName = name == null ? "" : name.trim().toLowerCase(Locale.ROOT);
+        if (normalizedName.length() > 100) {
+            normalizedName = normalizedName.substring(0, 100);
+        }
+        Pageable currentPage = pageRequest(page, size);
 
         return catalogService
-            .findByNameContaining(name, categoryId, currentPage)
+            .findByNameContaining(normalizedName, categoryId, currentPage)
             .map(product -> productMapper.productToProductDto(product, locale));
     }
 
@@ -102,7 +109,7 @@ public class CatalogController {
         @RequestParam(required = false) String lang) {
 
         String locale = SupportedLocale.normalize(lang);
-        Pageable currentPage = PageRequest.of(page, size);
+        Pageable currentPage = pageRequest(page, size);
 
         return catalogService
             .getProducts(currentPage)
@@ -113,8 +120,8 @@ public class CatalogController {
     @Cacheable(
         value = "productFindById",
         key = "{#id, " + LOCALE_KEY + "}",
-        unless = "#result == null || #result.isEmpty()")
-    public Optional<ProductDTO> getProductById(
+        unless = "#result == null || !#result.statusCode.is2xxSuccessful()")
+    public ResponseEntity<ProductDTO> getProductById(
         @PathVariable long id,
         @RequestParam(required = false) String lang) {
 
@@ -122,7 +129,9 @@ public class CatalogController {
 
         return catalogService
             .findByProductId(id)
-            .map(product -> productMapper.productToProductDto(product, locale));
+            .map(product -> productMapper.productToProductDto(product, locale))
+            .map(ResponseEntity::ok)
+            .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping(API_PATH + "/states/search/findByCountryCode")
@@ -132,9 +141,10 @@ public class CatalogController {
         @RequestParam(required = false) String lang) {
 
         String locale = SupportedLocale.normalize(lang);
+        String normalizedCode = code == null ? "" : code.trim().toUpperCase(Locale.ROOT);
 
         return catalogService
-            .getStatesByCountryCode(code.toUpperCase())
+            .getStatesByCountryCode(normalizedCode)
             .stream()
             .map(state -> stateMapper.stateToStateDto(state, locale))
             .collect(Collectors.toList());
@@ -152,5 +162,15 @@ public class CatalogController {
             .stream()
             .map(country -> countryMapper.countryToCountryDto(country, locale))
             .collect(Collectors.toList());
+    }
+
+    private static Pageable pageRequest(int page, int size) {
+        if (page < 0) {
+            throw new IllegalArgumentException("page must be >= 0");
+        }
+        if (size < 1 || size > MAX_PAGE_SIZE) {
+            throw new IllegalArgumentException("size must be between 1 and " + MAX_PAGE_SIZE);
+        }
+        return PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "id"));
     }
 }

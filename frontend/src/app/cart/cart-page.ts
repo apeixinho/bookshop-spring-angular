@@ -55,7 +55,7 @@ import { LocaleService } from '../i18n/locale.service';
                   </div>
                   <div class="line">
                     <span class="price">{{
-                      i18n.toDisplayMoney(item.product.unitPrice * item.quantity)
+                      i18n.lineTotal(item.product.unitPrice, item.quantity)
                         | currency
                           : i18n.currencyCode()
                           : 'symbol'

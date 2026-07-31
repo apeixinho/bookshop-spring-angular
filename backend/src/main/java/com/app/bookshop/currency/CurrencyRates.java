@@ -2,27 +2,38 @@ package com.app.bookshop.currency;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
 /**
  * Catalog {@code unit_price} values are stored in USD. Convert with fixed demo rates.
  * TRY rate (41.00) is a documented demo default — not supplied by product.
+ * Rounding: convert each unit price with HALF_UP to 2dp, then multiply by quantity.
  */
 public final class CurrencyRates {
 
     public static final String CATALOG_CURRENCY = "USD";
 
-    private static final Map<String, BigDecimal> USD_TO = Map.of(
-        "USD", BigDecimal.ONE,
-        "EUR", new BigDecimal("0.87"),
-        "CAD", new BigDecimal("1.40"),
-        "BRL", new BigDecimal("5.06"),
-        "INR", new BigDecimal("95.52"),
-        "TRY", new BigDecimal("41.00")
-    );
+    private static final Map<String, BigDecimal> USD_TO;
+
+    static {
+        Map<String, BigDecimal> rates = new LinkedHashMap<>();
+        rates.put("USD", BigDecimal.ONE);
+        rates.put("EUR", new BigDecimal("0.87"));
+        rates.put("CAD", new BigDecimal("1.40"));
+        rates.put("BRL", new BigDecimal("5.06"));
+        rates.put("INR", new BigDecimal("95.52"));
+        rates.put("TRY", new BigDecimal("41.00"));
+        USD_TO = Collections.unmodifiableMap(rates);
+    }
 
     private CurrencyRates() {
+    }
+
+    public static Map<String, BigDecimal> ratesFromUsd() {
+        return USD_TO;
     }
 
     public static String normalize(String currencyCode) {
@@ -36,11 +47,24 @@ public final class CurrencyRates {
         return code;
     }
 
+    public static BigDecimal rate(String currencyCode) {
+        return USD_TO.get(normalize(currencyCode));
+    }
+
     public static BigDecimal convertFromUsd(BigDecimal usdAmount, String currencyCode) {
-        String code = normalize(currencyCode);
         if (usdAmount == null) {
-            return BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP);
+            throw new IllegalArgumentException("USD amount is required");
         }
+        String code = normalize(currencyCode);
         return usdAmount.multiply(USD_TO.get(code)).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    public static BigDecimal lineTotalFromUsd(BigDecimal usdUnitPrice, int quantity, String currencyCode) {
+        if (quantity < 1) {
+            throw new IllegalArgumentException("quantity must be >= 1");
+        }
+        return convertFromUsd(usdUnitPrice, currencyCode)
+            .multiply(BigDecimal.valueOf(quantity))
+            .setScale(2, RoundingMode.HALF_UP);
     }
 }
