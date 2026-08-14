@@ -1,4 +1,4 @@
-# Bookshop frontend
+# Bookshop frontend (Angular storefront)
 
 Angular 21 storefront for the Bookshop monorepo.
 
@@ -14,8 +14,12 @@ Open http://localhost:4200. Defaults talk to API `http://localhost:8090` and aut
 ## Auth
 
 - Authorization Code + PKCE against `bookshop-spa`
-- Access + refresh tokens in `localStorage`; refresh ~30s before expiry
-- Checkout route is guarded; catalog is anonymous
+- Access token in memory; refresh/id tokens in `sessionStorage`; refresh ~30s before expiry
+- Checkout routes are guarded; catalog is anonymous
+- Guest cart lines (`productId` + `quantity`) persist in `localStorage` across login redirects; cleared after successful payment
+- After purchase, the SPA redirects to the mock payment page, then `/checkout/result`
+
+See [OAuth2 access policy](../docs/oauth2-access-policy.md).
 
 ## Assets
 

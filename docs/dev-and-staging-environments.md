@@ -1,4 +1,4 @@
-# Environments
+# Dev and staging environments
 
 ## Dev (`compose.dev.yml` / local JVM)
 
@@ -44,14 +44,14 @@ docker compose -f compose.staging.yml up --build
 
 Persist the auth-server JWK across container recreation (e.g. bind-mount `AUTH_JWK_PATH` / `./data`) or issued tokens become invalid after restart.
 
-## H2 vs MariaDB Flyway V4
+## H2 vs MariaDB Flyway
 
 Backend keeps **separate** migration trees:
 
 - `backend/src/main/resources/db/migration/h2/`
 - `backend/src/main/resources/db/migration/mariadb/`
 
-`V4__create-order-tables.sql` aligns unique keys (`customer.email`, billing/shipping address IDs) and FKs on both dialects. MariaDB also declares a few explicit secondary indexes that H2 omits. Prefer `compose.staging.yml` when validating MariaDB-specific index behavior.
+Keep dialects in sync when adding versions (e.g. V4 order tables, V6 `payment_session_id` / `payment_url`). Prefer `compose.staging.yml` when validating MariaDB-specific index behavior.
 
 ## JWT audience
 
@@ -65,4 +65,8 @@ Compose passes `OAUTH_AUDIENCE` to both services.
 
 ## SPA tokens
 
-`AuthService` persists access token, refresh token, and true expiry in `localStorage`; skew applies only when deciding to refresh. `authGuard` / `ensureValidAccessToken()` renew via the refresh_token grant (no iframe silent-renew page).
+`AuthService` keeps the access token in memory; refresh token, id token, and true expiry live in `sessionStorage`. Skew applies only when deciding to refresh. `authGuard` / `ensureValidAccessToken()` renew via the refresh_token grant (no iframe silent-renew page).
+
+## Auth vs payment webhook
+
+Shopper JWT covers `POST /api/v1/checkout/purchase`. Order finalization uses `POST /api/v1/checkout/payment-webhook` with `X-Payment-Secret` (see [OAuth2 access policy](oauth2-access-policy.md) and [mock payment service](../payment-service/README.md)).

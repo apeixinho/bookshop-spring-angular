@@ -3,9 +3,11 @@ info:
   title: Bookshop API
   version: 1.0.0
   description: >
-    Catalog is public (`lang` selects translation locale with English fallback).
-    Checkout requires Bearer JWT with scope bookshop.write. Catalog unit prices
-    are USD; checkout converts with fixed rates for currencyCode.
+    Catalog and currency rates are public (`lang` selects translation locale with English fallback).
+    Checkout purchase requires Bearer JWT with scope bookshop.write and an Idempotency-Key header.
+    Catalog unit prices are USD; checkout converts with fixed rates for currencyCode.
+    Orders start PENDING; stock is decremented when payment-service calls the payment webhook
+    with header X-Payment-Secret (no JWT).
 servers:
   - url: http://localhost:8090
 paths:

@@ -12,7 +12,8 @@ Greenfield monorepo: Angular 21 storefront, Spring Boot resource server, and Spr
 | `payment-service/` | Mock hosted checkout (port `8091`; webhook finalizes orders) |
 | `compose.dev.yml` | Local stack (H2, in-memory auth users) |
 | `compose.staging.yml` | Staging-like stack (MariaDB for API + auth) |
-| `docs/` | Environments, ADR, OpenAPI |
+| `docs/` | OAuth2 access policy, environments, OpenAPI |
+
 
 ## Quick start (local JVM)
 
@@ -68,12 +69,15 @@ Catalog `image_url` values are relative (`assets/images/products/...`). Files li
 ## Auth notes
 
 - JWT audience `bookshop-api` is set by the auth-server and validated by the backend (`spring.security.oauth2.resourceserver.jwt.audiences`).
-- SPA stores access + refresh tokens and refreshes ~30s before expiry (no `silent-renew.html`; that redirect was removed).
+- SPA keeps the access token in memory and stores refresh/id tokens in `sessionStorage`; it refreshes ~30s before expiry (no `silent-renew.html`).
 - Auth-server persists the RSA JWK under `bookshop.auth.jwk-path` (default `./data/auth-jwk.json`) so restarts keep accepting issued tokens.
 - Staging auth uses MariaDB database `bookshop_auth` (Flyway + JDBC users/clients). Dev uses in-memory beans (`@Profile("!staging")`).
+- The payment webhook is not JWT-gated; `payment-service` authenticates with `X-Payment-Secret` (see [OAuth2 access policy](docs/oauth2-access-policy.md)).
 
 ## Docs
 
-- [Environments](docs/ENVIRONMENTS.md) — dev vs staging, MariaDB, Flyway, JWK
-- [ADR-001 Auth](docs/ADR-001-auth.md)
-- [OpenAPI](docs/openapi.yaml) — path sketch; request schemas lag the live checkout DTO
+- [Documentation index](docs/README.md)
+- [OAuth2 access policy](docs/oauth2-access-policy.md) — resource server access (catalog, checkout JWT, payment webhook)
+- [Dev and staging environments](docs/dev-and-staging-environments.md) — Compose, MariaDB, Flyway, JWK, payment env
+- [Bookshop API OpenAPI](docs/bookshop-api.openapi.yaml) — catalog, checkout purchase, and payment webhook
+- [Mock payment service](payment-service/README.md) — hosted checkout and webhook
