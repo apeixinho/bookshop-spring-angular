@@ -34,7 +34,7 @@ public class SessionApiController {
         @Valid @RequestBody CreateSessionRequest request) {
 
         if (secret == null || !secret.equals(apiSecret)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid payment API secret");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid payment");
         }
         return store.create(request);
     }

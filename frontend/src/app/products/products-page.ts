@@ -119,7 +119,7 @@ const PAGE_SIZE = 8;
       display: flex;
       flex-direction: column;
       gap: 1rem;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 0;
       padding-block: 1.5rem;
     }
 

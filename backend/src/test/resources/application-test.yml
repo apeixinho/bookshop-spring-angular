@@ -20,7 +20,7 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          # Overridden by @MockBean JwtDecoder in security tests — avoid live issuer fetch
+          # Overridden by @MockitoBean JwtDecoder in security tests — avoid live issuer fetch
           issuer-uri: http://localhost:9000
           audiences: bookshop-api
 

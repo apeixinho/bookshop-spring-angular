@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { CartService } from '../cart/cart.service';
 import { LocaleService } from '../i18n/locale.service';
 
 interface TokenResponse {
@@ -33,6 +34,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly i18n = inject(LocaleService);
+  private readonly cart = inject(CartService);
 
   /** Access token stays in memory only (reduces XSS blast radius vs localStorage). */
   private readonly accessToken = signal<string | null>(null);
@@ -141,6 +143,7 @@ export class AuthService {
     this.refreshInFlight = null;
     const idToken = sessionStorage.getItem(ID_TOKEN_KEY) ?? this.idToken();
     this.clearSession();
+    this.cart.clearCart();
     sessionStorage.setItem(FLASH_KEY, 'toast.signedOut');
 
     const postLogout =
