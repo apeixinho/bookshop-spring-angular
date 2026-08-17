@@ -20,11 +20,6 @@
   <properties>
     <java.version>21</java.version>
     <org.mapstruct.version>1.6.3</org.mapstruct.version>
-    <!-- Pin H2 to 2.3.232: H2 2.4.x (managed by Spring Boot 4) removed the
-         DATETIME type keyword used by the H2 dev/test Flyway migrations.
-         H2 is dev/test-only here (staging uses MariaDB); pinning keeps the
-         already-applied migration checksums valid. -->
-    <h2.version>2.3.232</h2.version>
   </properties>
 
   <dependencies>
