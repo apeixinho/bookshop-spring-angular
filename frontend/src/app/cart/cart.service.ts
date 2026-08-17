@@ -16,7 +16,7 @@ interface PersistedCartLine {
   quantity: number;
 }
 
-const STORAGE_KEY = 'bookshop.cart';
+const STORAGE_KEY = 'catalog.cart';
 
 @Injectable({ providedIn: 'root' })
 export class CartService {

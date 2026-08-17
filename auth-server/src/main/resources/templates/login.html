@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title th:text="#{login.title}">Bookshop Sign In</title>
+  <title th:text="#{login.title}">Catalog Sign In</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:opsz,wght@9..40,400;9..40,500&display=swap" rel="stylesheet"/>
@@ -12,7 +12,7 @@
 <body>
   <div class="login">
     <form class="login__form" th:action="@{/login}" method="post">
-      <h1 class="login__brand" th:text="#{login.brand}">Bookshop</h1>
+      <h1 class="login__brand" th:text="#{login.brand}">Catalog</h1>
       <p class="login__lede" th:text="#{login.lede}">Sign in to complete checkout</p>
       <div class="login__error" th:if="${param.error}" th:text="#{login.error}">Invalid username or password</div>
       <label class="login__field" for="username">

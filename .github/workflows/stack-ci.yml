@@ -1,0 +1,129 @@
+# Stack CI — Compose/Docker smoke tests (separate from per-service unit CI).
+#
+# Branch → environment mapping (git branch ≠ Compose project; this maps when we smoke which stack):
+#   PR/push to staging|main  → always compose.staging.yml (MariaDB / nginx)
+#   Stack file changes       → compose.staging.yml (and compose.dev.yml when on/into dev)
+#
+# This is CI only (no image publish / deploy). GHCR = GitHub Container Registry (optional later).
+name: Stack CI
+
+on:
+  pull_request:
+    branches: [dev, staging, main]
+  push:
+    branches: [dev, staging, main]
+
+concurrency:
+  group: stack-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  filter:
+    name: Detect stack paths
+    runs-on: ubuntu-latest
+    outputs:
+      stack: ${{ steps.filter.outputs.stack }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            stack:
+              - "compose.dev.yml"
+              - "compose.staging.yml"
+              - ".env.example"
+              - "deploy/**"
+              - "**/Dockerfile"
+              - "**/Dockerfile.dev"
+              - "**/Dockerfile.staging"
+              - "frontend/docker-entrypoint.dev.sh"
+              - "frontend/docker-entrypoint.staging.sh"
+              - "frontend/nginx.conf"
+              - ".github/workflows/stack-ci.yml"
+
+  compose-staging:
+    name: Compose staging smoke
+    needs: filter
+    if: |
+      (github.event_name == 'pull_request' && (github.base_ref == 'staging' || github.base_ref == 'main'))
+      || (github.event_name == 'push' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'))
+      || needs.filter.outputs.stack == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Prepare env
+        run: cp .env.example .env
+
+      - name: Build and start staging stack
+        run: docker compose -f compose.staging.yml up --build -d --wait --wait-timeout 600
+
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          docker compose -f compose.staging.yml ps -a || true
+          docker compose -f compose.staging.yml logs --no-color --tail=200 frontend || true
+
+      - name: Smoke checks
+        run: |
+          set -euo pipefail
+          curl -sf http://localhost:9000/actuator/health | tee /tmp/auth-health.json
+          curl -sf http://localhost:8091/actuator/health | tee /tmp/payment-health.json
+          curl -sf http://localhost:8090/actuator/health | tee /tmp/backend-health.json
+          curl -sf "http://localhost:8090/api/v1/products?page=0&size=1" | tee /tmp/products.json
+          code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4200/)
+          echo "frontend HTTP ${code}"
+          case "${code}" in
+            200|301|302) ;;
+            *) echo "unexpected frontend status ${code}"; exit 1 ;;
+          esac
+
+      - name: Tear down staging stack
+        if: always()
+        run: docker compose -f compose.staging.yml down -v --remove-orphans
+
+  compose-dev:
+    name: Compose dev smoke
+    needs: filter
+    if: |
+      needs.filter.outputs.stack == 'true'
+      && (
+        (github.event_name == 'pull_request' && github.base_ref == 'dev')
+        || (github.event_name == 'push' && github.ref == 'refs/heads/dev')
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Prepare env
+        run: cp .env.example .env
+
+      - name: Build and start dev stack
+        run: docker compose -f compose.dev.yml up --build -d --wait --wait-timeout 600
+
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          docker compose -f compose.dev.yml ps -a || true
+          docker compose -f compose.dev.yml logs --no-color --tail=200 frontend || true
+
+      - name: Smoke checks
+        run: |
+          set -euo pipefail
+          curl -sf http://localhost:9000/actuator/health | tee /tmp/auth-health.json
+          curl -sf http://localhost:8091/actuator/health | tee /tmp/payment-health.json
+          curl -sf http://localhost:8090/actuator/health | tee /tmp/backend-health.json
+          curl -sf "http://localhost:8090/api/v1/products?page=0&size=1" | tee /tmp/products.json
+          code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4200/)
+          echo "frontend HTTP ${code}"
+          case "${code}" in
+            200|301|302) ;;
+            *) echo "unexpected frontend status ${code}"; exit 1 ;;
+          esac
+
+      - name: Tear down dev stack
+        if: always()
+        run: docker compose -f compose.dev.yml down -v --remove-orphans

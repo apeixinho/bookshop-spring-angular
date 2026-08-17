@@ -101,9 +101,9 @@ export class CheckoutResultPage implements OnInit {
     this.status.set(status);
 
     const tracking =
-      params.get('tracking') ?? sessionStorage.getItem('bookshop.pending.tracking');
+      params.get('tracking') ?? sessionStorage.getItem('catalog.pending.tracking');
     this.tracking.set(tracking);
-    sessionStorage.removeItem('bookshop.pending.tracking');
+    sessionStorage.removeItem('catalog.pending.tracking');
 
     if (status === 'success') {
       this.cart.clearCart();

@@ -1,5 +1,5 @@
 BEGIN;
-USE `bookshop_db` ;
+USE `catalog_db` ;
 
 CREATE TABLE IF NOT EXISTS country (
   id INT NOT NULL,

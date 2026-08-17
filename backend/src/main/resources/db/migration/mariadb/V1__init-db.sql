@@ -1,12 +1,12 @@
 BEGIN;
-USE `bookshop_db` ;
+USE `catalog_db` ;
 
-CREATE TABLE IF NOT EXISTS `bookshop_db`.`product_category` (
+CREATE TABLE IF NOT EXISTS `catalog_db`.`product_category` (
   `id` BIGINT(20) NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`id`)
 );
 
-CREATE TABLE IF NOT EXISTS `bookshop_db`.`product_category_translation` (
+CREATE TABLE IF NOT EXISTS `catalog_db`.`product_category_translation` (
   `id` BIGINT(20) NOT NULL AUTO_INCREMENT,
   `category_id` BIGINT(20) NOT NULL,
   `locale` VARCHAR(8) NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS `bookshop_db`.`product_category_translation` (
   CONSTRAINT `fk_category_translation` FOREIGN KEY (`category_id`) REFERENCES `product_category` (`id`)
 );
 
-CREATE TABLE IF NOT EXISTS `bookshop_db`.`product` (
+CREATE TABLE IF NOT EXISTS `catalog_db`.`product` (
   `id` BIGINT(20) NOT NULL AUTO_INCREMENT,
   `sku` VARCHAR(255) DEFAULT NULL,
   `unit_price` DECIMAL(13, 2) DEFAULT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS `bookshop_db`.`product` (
   CONSTRAINT `fk_category` FOREIGN KEY (`category_id`) REFERENCES `product_category` (`id`)
 );
 
-CREATE TABLE IF NOT EXISTS `bookshop_db`.`product_translation` (
+CREATE TABLE IF NOT EXISTS `catalog_db`.`product_translation` (
   `id` BIGINT(20) NOT NULL AUTO_INCREMENT,
   `product_id` BIGINT(20) NOT NULL,
   `locale` VARCHAR(8) NOT NULL,

@@ -400,7 +400,7 @@ export class CheckoutPage {
     const idempotencyKey = crypto.randomUUID();
     this.api.purchase(body, idempotencyKey).subscribe({
       next: (response) => {
-        sessionStorage.setItem('bookshop.pending.tracking', response.orderTrackingNumber);
+        sessionStorage.setItem('catalog.pending.tracking', response.orderTrackingNumber);
         this.submitting.set(false);
         window.location.href = response.paymentUrl;
       },

@@ -1,6 +1,6 @@
 BEGIN;
 
-USE "bookshop_db" ;
+USE "catalog_db" ;
 
 SET REFERENTIAL_INTEGRITY FALSE;
 DROP TABLE IF EXISTS `order_item`;
