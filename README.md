@@ -1,14 +1,24 @@
 # Bookshop (Spring + Angular)
 
-Greenfield monorepo: Angular 21 storefront, Spring Boot resource server, and Spring Authorization Server.
+[![Frontend CI](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/frontend.yml/badge.svg)](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/frontend.yml)
+[![Backend CI](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/backend.yml/badge.svg)](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/backend.yml)
+[![Auth Server CI](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/auth-server.yml/badge.svg)](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/auth-server.yml)
+[![Payment Service CI](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/payment-service.yml/badge.svg)](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/payment-service.yml)
+
+![Angular](https://img.shields.io/badge/Angular-22-DD0031?logo=angular&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F?logo=springboot&logoColor=white)
+![Java](https://img.shields.io/badge/Java-21-007396?logo=openjdk&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)
+
+Greenfield monorepo: Angular 22 storefront, Spring Boot 4.1 resource server, and Spring Authorization Server.
 
 ## Layout
 
 | Path | Role |
 |------|------|
-| `frontend/` | Angular 21 SPA (signals, PKCE + refresh, locale/FX) |
-| `backend/` | Bookshop API (OAuth2 resource server, Flyway, translation tables) |
-| `auth-server/` | Spring Authorization Server (issuer `http://localhost:9000`) |
+| `frontend/` | Angular 22 SPA (signals, PKCE + refresh, locale/FX) |
+| `backend/` | Bookshop API — Spring Boot 4.1 (OAuth2 resource server, Flyway, translation tables) |
+| `auth-server/` | Spring Authorization Server — Spring Boot 4.1 / Spring Security 7 (issuer `http://localhost:9000`) |
 | `payment-service/` | Mock hosted checkout (port `8091`; webhook finalizes orders) |
 | `compose.dev.yml` | Local stack (H2, in-memory auth users) |
 | `compose.staging.yml` | Staging-like stack (MariaDB for API + auth) |
@@ -73,6 +83,19 @@ Catalog `image_url` values are relative (`assets/images/products/...`). Files li
 - Auth-server persists the RSA JWK under `bookshop.auth.jwk-path` (default `./data/auth-jwk.json`) so restarts keep accepting issued tokens.
 - Staging auth uses MariaDB database `bookshop_auth` (Flyway + JDBC users/clients). Dev uses in-memory beans (`@Profile("!staging")`).
 - The payment webhook is not JWT-gated; `payment-service` authenticates with `X-Payment-Secret` (see [OAuth2 access policy](docs/oauth2-access-policy.md)).
+
+## CI/CD
+
+Each service has a path-filtered GitHub Actions workflow (status badges are at the top of this file):
+
+| Workflow | Triggers on changes to | Steps |
+|----------|------------------------|-------|
+| ✅ [Frontend CI](.github/workflows/frontend.yml) | `frontend/**` | `npm ci` → `npm run test:ci` → `npm run build` |
+| ✅ [Backend CI](.github/workflows/backend.yml) | `backend/**` | `mvn -B test package` |
+| ✅ [Auth Server CI](.github/workflows/auth-server.yml) | `auth-server/**` | `mvn -B test package` |
+| ✅ [Payment Service CI](.github/workflows/payment-service.yml) | `payment-service/**` | `mvn -B test package` |
+
+> ℹ️ The frontend workflow runs on Node 22 (Angular 22 requires Node ≥ 22.22.3). The JVM services build on Java 21.
 
 ## Docs
 

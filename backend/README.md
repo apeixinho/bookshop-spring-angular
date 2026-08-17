@@ -1,6 +1,10 @@
 # Bookshop backend (catalog and checkout API)
 
-Spring Boot 3.4 OAuth2 resource server for the Bookshop catalog and checkout API.
+[![Backend CI](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/backend.yml/badge.svg)](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/backend.yml)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F?logo=springboot&logoColor=white)
+![Java](https://img.shields.io/badge/Java-21-007396?logo=openjdk&logoColor=white)
+
+Spring Boot 4.1 OAuth2 resource server for the Bookshop catalog and checkout API.
 
 ## Access policy
 
@@ -18,7 +22,7 @@ Full decision record: [OAuth2 access policy](../docs/oauth2-access-policy.md).
 | `dev` / `test` | H2 | `classpath:db/migration/h2` |
 | `staging` | MariaDB `bookshop_db` | `classpath:db/migration/mariadb` |
 
-H2 and MariaDB migrations must stay in sync (e.g. V4 order tables, V6 payment session columns). See [dev and staging environments](../docs/dev-and-staging-environments.md).
+H2 and MariaDB migrations must stay in sync (e.g. V4 order tables, V6 payment session columns). Timestamp columns use `TIMESTAMP(6)` on H2 and `DATETIME(6)` on MariaDB — H2 2.4.x (shipped with Spring Boot 4) removed the non-standard `DATETIME` keyword. See [dev and staging environments](../docs/dev-and-staging-environments.md).
 
 ## Run
 
