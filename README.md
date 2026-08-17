@@ -4,6 +4,7 @@
 [![Backend CI](https://github.com/apeixinho/catalog-eshop-demo/actions/workflows/backend.yml/badge.svg)](https://github.com/apeixinho/catalog-eshop-demo/actions/workflows/backend.yml)
 [![Auth Server CI](https://github.com/apeixinho/catalog-eshop-demo/actions/workflows/auth-server.yml/badge.svg)](https://github.com/apeixinho/catalog-eshop-demo/actions/workflows/auth-server.yml)
 [![Payment Service CI](https://github.com/apeixinho/catalog-eshop-demo/actions/workflows/payment-service.yml/badge.svg)](https://github.com/apeixinho/catalog-eshop-demo/actions/workflows/payment-service.yml)
+[![Stack CI](https://github.com/apeixinho/catalog-eshop-demo/actions/workflows/stack-ci.yml/badge.svg)](https://github.com/apeixinho/catalog-eshop-demo/actions/workflows/stack-ci.yml)
 
 ![Angular](https://img.shields.io/badge/Angular-22-DD0031?logo=angular&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F?logo=springboot&logoColor=white)
@@ -86,7 +87,11 @@ Catalog `image_url` values are relative (`assets/images/products/...`). Files li
 
 ## CI/CD
 
-Each service has a path-filtered GitHub Actions workflow (status badges are at the top of this file):
+**CI** is GitHub Actions (GHA). There is no image publish or deploy yet (that would be optional later via GHCR — GitHub Container Registry at `ghcr.io`).
+
+### Per-service unit CI
+
+Path-filtered workflows (status badges at the top of this file):
 
 | Workflow | Triggers on changes to | Steps |
 |----------|------------------------|-------|
@@ -96,6 +101,20 @@ Each service has a path-filtered GitHub Actions workflow (status badges are at t
 | ✅ [Payment Service CI](.github/workflows/payment-service.yml) | `payment-service/**` | `mvn -B test package` |
 
 > ℹ️ The frontend workflow runs on Node 22 (Angular 22 requires Node ≥ 22.22.3). The JVM services build on Java 21.
+
+### Stack CI (Compose smoke)
+
+[Stack CI](.github/workflows/stack-ci.yml) is a separate workflow (Option B) for cross-cutting Compose/Docker paths and promotion branches:
+
+| When | What runs |
+|------|-----------|
+| PR or push to `staging` / `main` | Always `compose.staging.yml` smoke (MariaDB + nginx) |
+| Stack files change (`compose*.yml`, Dockerfiles, `.env.example`, `deploy/**`, …) | `compose.staging.yml` smoke |
+| Same stack-file changes on/into `dev` | Also `compose.dev.yml` smoke (H2) |
+
+Smoke = `docker compose up --build --wait`, then curl actuator health, public products API, and the SPA root.
+
+Git branch `staging` is the promotion lane; Compose project `eshop-staging` is the MariaDB runtime profile — Stack CI maps **when** that stack is exercised, it does not host a long-lived environment.
 
 ## Docs
 
