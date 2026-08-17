@@ -1,11 +1,18 @@
 # Bookshop frontend (Angular storefront)
 
-Angular 21 storefront for the Bookshop monorepo.
+[![Frontend CI](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/frontend.yml/badge.svg)](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/frontend.yml)
+![Angular](https://img.shields.io/badge/Angular-22-DD0031?logo=angular&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)
+![Node](https://img.shields.io/badge/Node-%E2%89%A522.22.3-339933?logo=nodedotjs&logoColor=white)
+
+Angular 22 storefront for the Bookshop monorepo (TypeScript 6.0).
 
 ## Run locally
 
+> Requires Node ≥ 22.22.3 (Angular 22 CLI minimum).
+
 ```bash
-npm install --legacy-peer-deps
+npm install
 npm start
 ```
 
