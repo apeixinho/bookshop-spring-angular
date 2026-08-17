@@ -20,12 +20,12 @@ export interface AuthUser {
   subject: string;
 }
 
-const PKCE_VERIFIER_PREFIX = 'bookshop.pkce.verifier.';
-const OAUTH_RETURN_PREFIX = 'bookshop.oauth.return.';
-const ID_TOKEN_KEY = 'bookshop.id_token';
-const REFRESH_TOKEN_KEY = 'bookshop.refresh_token';
-const EXPIRES_AT_KEY = 'bookshop.expires_at';
-const FLASH_KEY = 'bookshop.flash';
+const PKCE_VERIFIER_PREFIX = 'catalog.pkce.verifier.';
+const OAUTH_RETURN_PREFIX = 'catalog.oauth.return.';
+const ID_TOKEN_KEY = 'catalog.id_token';
+const REFRESH_TOKEN_KEY = 'catalog.refresh_token';
+const EXPIRES_AT_KEY = 'catalog.expires_at';
+const FLASH_KEY = 'catalog.flash';
 /** Refresh this many ms before access-token expiry */
 const EXPIRY_SKEW_MS = 30_000;
 
@@ -212,7 +212,7 @@ export class AuthService {
     sessionStorage.removeItem(REFRESH_TOKEN_KEY);
     sessionStorage.removeItem(EXPIRES_AT_KEY);
     // Migrate away from legacy localStorage tokens if present.
-    localStorage.removeItem('bookshop.access_token');
+    localStorage.removeItem('catalog.access_token');
     localStorage.removeItem(ID_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(EXPIRES_AT_KEY);

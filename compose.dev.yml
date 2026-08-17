@@ -1,14 +1,14 @@
 # Local development stack: H2 in-memory (Spring profiles = dev)
 # Project name is separate from staging so images/containers are not overwritten.
-name: bookshop-dev
+name: eshop-dev
 
 services:
   auth-server:
-    image: bookshop-auth-server:dev
+    image: eshop-auth-server:dev
     build:
       context: ./auth-server
       dockerfile: Dockerfile.dev
-    container_name: bookshop-auth-server-dev
+    container_name: eshop-auth-server-dev
     ports:
       - "${AUTH_SERVER_PORT:-9000}:9000"
     environment:
@@ -17,13 +17,13 @@ services:
       # Token iss must match what browsers and the resource server validate
       AUTH_ISSUER_URI: ${AUTH_ISSUER_URI:-http://localhost:9000}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:4200}
-      OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-bookshop-spa}
-      OAUTH_AUDIENCE: ${OAUTH_AUDIENCE:-bookshop-api}
+      OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-catalog-spa}
+      OAUTH_AUDIENCE: ${OAUTH_AUDIENCE:-catalog-api}
       AUTH_JWK_PATH: /opt/app/data/auth-jwk.json
     volumes:
       - auth_jwk_dev:/opt/app/data
     networks:
-      - bookshop-network
+      - eshop-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/actuator/health"]
       interval: 30s
@@ -33,11 +33,11 @@ services:
     restart: unless-stopped
 
   payment-service:
-    image: bookshop-payment-service:dev
+    image: eshop-payment-service:dev
     build:
       context: ./payment-service
       dockerfile: Dockerfile.dev
-    container_name: bookshop-payment-service-dev
+    container_name: eshop-payment-service-dev
     ports:
       - "${PAYMENT_SERVER_PORT:-8091}:8091"
     environment:
@@ -47,7 +47,7 @@ services:
       PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET:-dev-payment-secret}
       PAYMENT_API_SECRET: ${PAYMENT_API_SECRET:-dev-payment-secret}
     networks:
-      - bookshop-network
+      - eshop-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8091/actuator/health"]
       interval: 30s
@@ -57,11 +57,11 @@ services:
     restart: unless-stopped
 
   backend:
-    image: bookshop-backend:dev
+    image: eshop-backend:dev
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    container_name: bookshop-backend-dev
+    container_name: eshop-backend-dev
     ports:
       - "${BACKEND_PORT:-8090}:8090"
     environment:
@@ -69,7 +69,7 @@ services:
       BACKEND_PORT: 8090
       AUTH_ISSUER_URI: ${AUTH_ISSUER_URI:-http://localhost:9000}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://auth-server:9000/oauth2/jwks
-      OAUTH_AUDIENCE: ${OAUTH_AUDIENCE:-bookshop-api}
+      OAUTH_AUDIENCE: ${OAUTH_AUDIENCE:-catalog-api}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:4200}
       PAYMENT_BASE_URL: ${PAYMENT_BASE_URL:-http://payment-service:8091}
       PAYMENT_API_SECRET: ${PAYMENT_API_SECRET:-dev-payment-secret}
@@ -81,7 +81,7 @@ services:
       payment-service:
         condition: service_healthy
     networks:
-      - bookshop-network
+      - eshop-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8090/actuator/health"]
       interval: 30s
@@ -92,28 +92,28 @@ services:
 
   frontend:
     # ng serve listens on 4200 (Dockerfile.dev) — do not use the nginx staging image here
-    image: bookshop-frontend:dev
+    image: eshop-frontend:dev
     build:
       context: ./frontend
       dockerfile: Dockerfile.dev
-    container_name: bookshop-frontend-dev
+    container_name: eshop-frontend-dev
     ports:
       - "4200:4200"
     environment:
       AUTH_ISSUER_URI: ${AUTH_BROWSER_ISSUER_URI:-http://localhost:9000}
       API_BASE_URL: ${API_BASE_URL:-http://localhost:8090}
-      OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-bookshop-spa}
-      OAUTH_AUDIENCE: ${OAUTH_AUDIENCE:-bookshop-api}
+      OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-catalog-spa}
+      OAUTH_AUDIENCE: ${OAUTH_AUDIENCE:-catalog-api}
       OAUTH_REDIRECT_URI: ${OAUTH_REDIRECT_URI:-http://localhost:4200/auth/callback}
-      OAUTH_SCOPES: ${OAUTH_SCOPES:-openid profile bookshop.read bookshop.write}
+      OAUTH_SCOPES: ${OAUTH_SCOPES:-openid profile catalog.read catalog.write}
     depends_on:
       - backend
     networks:
-      - bookshop-network
+      - eshop-network
     restart: unless-stopped
 
 networks:
-  bookshop-network:
+  eshop-network:
     driver: bridge
 
 volumes:

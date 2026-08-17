@@ -16,7 +16,7 @@ import { CatalogApiService } from './shared/catalog-api.service';
     <div class="shell">
       <header class="site-header">
         <div class="header-inner page-shell">
-          <a routerLink="/products" class="brand">Bookshop</a>
+          <a routerLink="/products" class="brand">Catalog</a>
           <nav class="main-nav" aria-label="Primary">
             <a routerLink="/products" routerLinkActive="active" class="nav-link">
               {{ i18n.t('nav.catalog') }}

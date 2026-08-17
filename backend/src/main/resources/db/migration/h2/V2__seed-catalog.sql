@@ -1,5 +1,5 @@
 BEGIN;
-USE "bookshop_db" ;
+USE "catalog_db" ;
 
 -- Categories
 INSERT INTO product_category DEFAULT VALUES;

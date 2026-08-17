@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "bookshop-frontend": {
+    "eshop-frontend": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -67,10 +67,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "bookshop-frontend:build:production"
+              "buildTarget": "eshop-frontend:build:production"
             },
             "development": {
-              "buildTarget": "bookshop-frontend:build:development"
+              "buildTarget": "eshop-frontend:build:development"
             }
           },
           "defaultConfiguration": "development"

@@ -67,4 +67,4 @@ export const LOCALE_OPTIONS: readonly LocaleOption[] = [
 
 export const DEFAULT_COUNTRY_CODE: CountryCode = 'PT';
 
-export const STORAGE_KEY = 'bookshop.locale.country';
+export const STORAGE_KEY = 'catalog.locale.country';

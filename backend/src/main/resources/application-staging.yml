@@ -1,12 +1,12 @@
 spring:
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://mariadb:3306/${MARIADB_DATABASE:bookshop_db}?useSSL=false&useUnicode=yes&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: ${MARIADB_USERNAME:bookshop_user}
-    password: ${MARIADB_PASSWORD:bookshop_pass}
+    url: jdbc:mariadb://mariadb:3306/${MARIADB_DATABASE:catalog_db}?useSSL=false&useUnicode=yes&characterEncoding=UTF-8&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${MARIADB_USERNAME:catalog_user}
+    password: ${MARIADB_PASSWORD:catalog_pass}
     hikari:
       maximum-pool-size: 5
-      pool-name: BookshopDB-Pool
+      pool-name: CatalogDB-Pool
   flyway:
     baseline-on-migrate: true
     validate-on-migrate: true
@@ -19,4 +19,4 @@ app:
 
 logging:
   level:
-    "[com.app.bookshop]": INFO
+    "[com.app.catalog]": INFO

@@ -1,9 +1,9 @@
-# Staging profile: users + OAuth clients in MariaDB (bookshop_auth database)
+# Staging profile: users + OAuth clients in MariaDB (catalog_auth database)
 spring:
   datasource:
-    url: jdbc:mariadb://mariadb:3306/${AUTH_MARIADB_DATABASE:bookshop_auth}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    username: ${MARIADB_USERNAME:bookshop_user}
-    password: ${MARIADB_PASSWORD:bookshop_pass}
+    url: jdbc:mariadb://mariadb:3306/${AUTH_MARIADB_DATABASE:catalog_auth}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${MARIADB_USERNAME:catalog_user}
+    password: ${MARIADB_PASSWORD:catalog_pass}
     driver-class-name: org.mariadb.jdbc.Driver
   flyway:
     enabled: true
@@ -12,4 +12,4 @@ spring:
 
 logging:
   level:
-    com.app.bookshop.auth: INFO
+    com.app.catalog.auth: INFO
