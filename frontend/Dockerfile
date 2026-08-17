@@ -8,6 +8,8 @@ RUN npm run build
 
 FROM nginx:1.27-alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+RUN apk add --no-cache curl
 COPY --from=build /app/dist/eshop-frontend/browser /usr/share/nginx/html
 EXPOSE 80
-HEALTHCHECK CMD wget -qO- http://localhost/ || exit 1
+HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=5 \
+  CMD curl -fsS http://127.0.0.1/ >/dev/null || exit 1

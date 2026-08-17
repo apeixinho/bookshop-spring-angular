@@ -60,6 +60,12 @@ jobs:
       - name: Build and start staging stack
         run: docker compose -f compose.staging.yml up --build -d --wait --wait-timeout 600
 
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          docker compose -f compose.staging.yml ps -a || true
+          docker compose -f compose.staging.yml logs --no-color --tail=200 frontend || true
+
       - name: Smoke checks
         run: |
           set -euo pipefail
@@ -97,6 +103,12 @@ jobs:
 
       - name: Build and start dev stack
         run: docker compose -f compose.dev.yml up --build -d --wait --wait-timeout 600
+
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          docker compose -f compose.dev.yml ps -a || true
+          docker compose -f compose.dev.yml logs --no-color --tail=200 frontend || true
 
       - name: Smoke checks
         run: |
