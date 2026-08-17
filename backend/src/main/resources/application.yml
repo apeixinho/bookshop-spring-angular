@@ -13,7 +13,7 @@ spring:
     open-in-view: false
     properties:
       hibernate:
-        "[default_schema]": bookshop_db
+        "[default_schema]": catalog_db
   sql:
     init:
       mode: never
@@ -22,7 +22,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${AUTH_ISSUER_URI:http://localhost:9000}
-          audiences: ${OAUTH_AUDIENCE:bookshop-api}
+          audiences: ${OAUTH_AUDIENCE:catalog-api}
 
 management:
   endpoints:
@@ -39,7 +39,7 @@ app:
   cors:
     allowed-origins: ${FRONTEND_ORIGIN:http://localhost:4200}
 
-bookshop:
+catalog:
   payment:
     base-url: ${PAYMENT_BASE_URL:http://localhost:8091}
     api-secret: ${PAYMENT_API_SECRET:dev-payment-secret}
@@ -55,4 +55,4 @@ springdoc:
 logging:
   level:
     root: INFO
-    "[com.app.bookshop]": INFO
+    "[com.app.catalog]": INFO

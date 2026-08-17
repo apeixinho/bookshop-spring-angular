@@ -1,5 +1,5 @@
 BEGIN;
-USE "bookshop_db" ;
+USE "catalog_db" ;
 
 SET REFERENTIAL_INTEGRITY FALSE;
 

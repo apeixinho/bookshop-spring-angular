@@ -9,7 +9,7 @@ export interface Toast {
   tone: ToastTone;
 }
 
-const FLASH_KEY = 'bookshop.flash';
+const FLASH_KEY = 'catalog.flash';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {

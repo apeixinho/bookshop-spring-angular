@@ -1,3 +1,3 @@
-CREATE DATABASE IF NOT EXISTS bookshop_auth;
-GRANT ALL PRIVILEGES ON bookshop_auth.* TO 'bookshop_user'@'%';
+CREATE DATABASE IF NOT EXISTS catalog_auth;
+GRANT ALL PRIVILEGES ON catalog_auth.* TO 'catalog_user'@'%';
 FLUSH PRIVILEGES;

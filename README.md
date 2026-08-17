@@ -1,9 +1,9 @@
-# Bookshop (Spring + Angular)
+# Catalog E-Shop
 
-[![Frontend CI](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/frontend.yml/badge.svg)](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/frontend.yml)
-[![Backend CI](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/backend.yml/badge.svg)](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/backend.yml)
-[![Auth Server CI](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/auth-server.yml/badge.svg)](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/auth-server.yml)
-[![Payment Service CI](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/payment-service.yml/badge.svg)](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/payment-service.yml)
+[![Frontend CI](https://github.com/apeixinho/catalog-eshop-demo/actions/workflows/frontend.yml/badge.svg)](https://github.com/apeixinho/catalog-eshop-demo/actions/workflows/frontend.yml)
+[![Backend CI](https://github.com/apeixinho/catalog-eshop-demo/actions/workflows/backend.yml/badge.svg)](https://github.com/apeixinho/catalog-eshop-demo/actions/workflows/backend.yml)
+[![Auth Server CI](https://github.com/apeixinho/catalog-eshop-demo/actions/workflows/auth-server.yml/badge.svg)](https://github.com/apeixinho/catalog-eshop-demo/actions/workflows/auth-server.yml)
+[![Payment Service CI](https://github.com/apeixinho/catalog-eshop-demo/actions/workflows/payment-service.yml/badge.svg)](https://github.com/apeixinho/catalog-eshop-demo/actions/workflows/payment-service.yml)
 
 ![Angular](https://img.shields.io/badge/Angular-22-DD0031?logo=angular&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F?logo=springboot&logoColor=white)
@@ -17,7 +17,7 @@ Greenfield monorepo: Angular 22 storefront, Spring Boot 4.1 resource server, and
 | Path | Role |
 |------|------|
 | `frontend/` | Angular 22 SPA (signals, PKCE + refresh, locale/FX) |
-| `backend/` | Bookshop API — Spring Boot 4.1 (OAuth2 resource server, Flyway, translation tables) |
+| `backend/` | Catalog API — Spring Boot 4.1 (OAuth2 resource server, Flyway, translation tables) |
 | `auth-server/` | Spring Authorization Server — Spring Boot 4.1 / Spring Security 7 (issuer `http://localhost:9000`) |
 | `payment-service/` | Mock hosted checkout (port `8091`; webhook finalizes orders) |
 | `compose.dev.yml` | Local stack (H2, in-memory auth users) |
@@ -48,7 +48,7 @@ cd frontend && npm start
 
 Demo logins (local/dev/staging seed only): `user` / `password`, `admin` / `password`.
 
-Catalog GETs are public (`?lang=` for translated names). Checkout requires PKCE login and scope `bookshop.write`, plus an `Idempotency-Key` header. The API binds the order to the JWT `sub`, builds lines from `{productId, quantity}`, prices from catalog USD × fixed FX rates for `currencyCode`, upserts the customer by oauth subject, and creates a **PENDING** order without decrementing stock. The SPA redirects to the hosted payment page; after Pay, a signed webhook decrements stock and sets `PAID` (or `CANCELLED` on cancel / stock failure).
+Catalog GETs are public (`?lang=` for translated names). Checkout requires PKCE login and scope `catalog.write`, plus an `Idempotency-Key` header. The API binds the order to the JWT `sub`, builds lines from `{productId, quantity}`, prices from catalog USD × fixed FX rates for `currencyCode`, upserts the customer by oauth subject, and creates a **PENDING** order without decrementing stock. The SPA redirects to the hosted payment page; after Pay, a signed webhook decrements stock and sets `PAID` (or `CANCELLED` on cancel / stock failure).
 
 ## Docker Compose
 
@@ -60,7 +60,7 @@ cp .env.example .env
 # Dev — ng serve on :4200, H2, in-memory auth
 docker compose -f compose.dev.yml up --build
 
-# Staging — nginx SPA (:4200→80), MariaDB bookshop_db + bookshop_auth
+# Staging — nginx SPA (:4200→80), MariaDB catalog_db + catalog_auth
 docker compose -f compose.staging.yml up --build
 ```
 
@@ -78,10 +78,10 @@ Catalog `image_url` values are relative (`assets/images/products/...`). Files li
 
 ## Auth notes
 
-- JWT audience `bookshop-api` is set by the auth-server and validated by the backend (`spring.security.oauth2.resourceserver.jwt.audiences`).
+- JWT audience `catalog-api` is set by the auth-server and validated by the backend (`spring.security.oauth2.resourceserver.jwt.audiences`).
 - SPA keeps the access token in memory and stores refresh/id tokens in `sessionStorage`; it refreshes ~30s before expiry (no `silent-renew.html`).
-- Auth-server persists the RSA JWK under `bookshop.auth.jwk-path` (default `./data/auth-jwk.json`) so restarts keep accepting issued tokens.
-- Staging auth uses MariaDB database `bookshop_auth` (Flyway + JDBC users/clients). Dev uses in-memory beans (`@Profile("!staging")`).
+- Auth-server persists the RSA JWK under `catalog.auth.jwk-path` (default `./data/auth-jwk.json`) so restarts keep accepting issued tokens.
+- Staging auth uses MariaDB database `catalog_auth` (Flyway + JDBC users/clients). Dev uses in-memory beans (`@Profile("!staging")`).
 - The payment webhook is not JWT-gated; `payment-service` authenticates with `X-Payment-Secret` (see [OAuth2 access policy](docs/oauth2-access-policy.md)).
 
 ## CI/CD
@@ -102,5 +102,5 @@ Each service has a path-filtered GitHub Actions workflow (status badges are at t
 - [Documentation index](docs/README.md)
 - [OAuth2 access policy](docs/oauth2-access-policy.md) — resource server access (catalog, checkout JWT, payment webhook)
 - [Dev and staging environments](docs/dev-and-staging-environments.md) — Compose, MariaDB, Flyway, JWK, payment env
-- [Bookshop API OpenAPI](docs/bookshop-api.openapi.yaml) — catalog, checkout purchase, and payment webhook
+- [Catalog API OpenAPI](docs/catalog-api.openapi.yaml) — catalog, checkout purchase, and payment webhook
 - [Mock payment service](payment-service/README.md) — hosted checkout and webhook

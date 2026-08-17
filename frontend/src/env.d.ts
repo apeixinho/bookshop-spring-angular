@@ -1,5 +1,5 @@
 declare global {
-  interface BookshopRuntimeEnv {
+  interface CatalogRuntimeEnv {
     apiBaseUrl?: string;
     authIssuer?: string;
     oauthClientId?: string;
@@ -9,7 +9,7 @@ declare global {
   }
 
   interface Window {
-    __BOOKSHOP_ENV__?: BookshopRuntimeEnv;
+    __CATALOG_ENV__?: CatalogRuntimeEnv;
   }
 }
 

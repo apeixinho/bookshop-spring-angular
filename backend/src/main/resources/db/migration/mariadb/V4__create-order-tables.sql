@@ -1,6 +1,6 @@
 BEGIN;
 
-USE `bookshop_db` ;
+USE `catalog_db` ;
 
 CREATE TABLE IF NOT EXISTS `address` (
   `id` bigint NOT NULL AUTO_INCREMENT,

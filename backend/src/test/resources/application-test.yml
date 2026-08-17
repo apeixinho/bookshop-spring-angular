@@ -1,7 +1,7 @@
 spring:
   datasource:
     driver-class-name: org.h2.Driver
-    url: jdbc:h2:mem:bookshop_db;DATABASE_TO_UPPER=false;IGNORECASE=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;
+    url: jdbc:h2:mem:catalog_db;DATABASE_TO_UPPER=false;IGNORECASE=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;
     username: sa
     password:
   jpa:
@@ -10,7 +10,7 @@ spring:
       ddl-auto: none
     properties:
       hibernate:
-        "[default_schema]": bookshop_db
+        "[default_schema]": catalog_db
   flyway:
     baseline-on-migrate: true
     validate-on-migrate: true
@@ -22,7 +22,7 @@ spring:
         jwt:
           # Overridden by @MockitoBean JwtDecoder in security tests — avoid live issuer fetch
           issuer-uri: http://localhost:9000
-          audiences: bookshop-api
+          audiences: catalog-api
 
 app:
   cors:

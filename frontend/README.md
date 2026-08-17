@@ -1,11 +1,11 @@
-# Bookshop frontend (Angular storefront)
+# Catalog frontend (Angular storefront)
 
-[![Frontend CI](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/frontend.yml/badge.svg)](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/frontend.yml)
+[![Frontend CI](https://github.com/apeixinho/catalog-eshop-demo/actions/workflows/frontend.yml/badge.svg)](https://github.com/apeixinho/catalog-eshop-demo/actions/workflows/frontend.yml)
 ![Angular](https://img.shields.io/badge/Angular-22-DD0031?logo=angular&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white)
 ![Node](https://img.shields.io/badge/Node-%E2%89%A522.22.3-339933?logo=nodedotjs&logoColor=white)
 
-Angular 22 storefront for the Bookshop monorepo (TypeScript 6.0).
+Angular 22 storefront for the Catalog monorepo (TypeScript 6.0).
 
 ## Run locally
 
@@ -16,11 +16,11 @@ npm install
 npm start
 ```
 
-Open http://localhost:4200. Defaults talk to API `http://localhost:8090` and auth `http://localhost:9000`. Override at runtime via `/env.js` (`window.__BOOKSHOP_ENV__`) — used by Compose entrypoints.
+Open http://localhost:4200. Defaults talk to API `http://localhost:8090` and auth `http://localhost:9000`. Override at runtime via `/env.js` (`window.__CATALOG_ENV__`) — used by Compose entrypoints.
 
 ## Auth
 
-- Authorization Code + PKCE against `bookshop-spa`
+- Authorization Code + PKCE against `catalog-spa`
 - Access token in memory; refresh/id tokens in `sessionStorage`; refresh ~30s before expiry
 - Checkout routes are guarded; catalog is anonymous
 - Guest cart lines (`productId` + `quantity`) persist in `localStorage` across login redirects; cleared after successful payment and on sign-out

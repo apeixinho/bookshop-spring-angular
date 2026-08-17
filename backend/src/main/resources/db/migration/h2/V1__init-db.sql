@@ -1,13 +1,13 @@
 BEGIN;
-CREATE SCHEMA IF NOT EXISTS "bookshop_db";
-USE "bookshop_db";
+CREATE SCHEMA IF NOT EXISTS "catalog_db";
+USE "catalog_db";
 
-CREATE TABLE IF NOT EXISTS "bookshop_db"."product_category" (
+CREATE TABLE IF NOT EXISTS "catalog_db"."product_category" (
   "id" BIGINT NOT NULL AUTO_INCREMENT,
   PRIMARY KEY ("id")
 );
 
-CREATE TABLE IF NOT EXISTS "bookshop_db"."product_category_translation" (
+CREATE TABLE IF NOT EXISTS "catalog_db"."product_category_translation" (
   "id" BIGINT NOT NULL AUTO_INCREMENT,
   "category_id" BIGINT NOT NULL,
   "locale" CHARACTER VARYING(8) NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS "bookshop_db"."product_category_translation" (
   CONSTRAINT "fk_category_translation" FOREIGN KEY ("category_id") REFERENCES "product_category" ("id")
 );
 
-CREATE TABLE IF NOT EXISTS "bookshop_db"."product" (
+CREATE TABLE IF NOT EXISTS "catalog_db"."product" (
   "id" BIGINT NOT NULL AUTO_INCREMENT,
   "sku" CHARACTER VARYING(255),
   "unit_price" NUMERIC(13, 2),
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS "bookshop_db"."product" (
   CONSTRAINT "fk_category" FOREIGN KEY ("category_id") REFERENCES "product_category" ("id")
 );
 
-CREATE TABLE IF NOT EXISTS "bookshop_db"."product_translation" (
+CREATE TABLE IF NOT EXISTS "catalog_db"."product_translation" (
   "id" BIGINT NOT NULL AUTO_INCREMENT,
   "product_id" BIGINT NOT NULL,
   "locale" CHARACTER VARYING(8) NOT NULL,

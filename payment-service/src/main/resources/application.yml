@@ -3,11 +3,11 @@ server:
 
 spring:
   application:
-    name: bookshop-payment-service
+    name: eshop-payment-service
   thymeleaf:
     cache: false
 
-bookshop:
+catalog:
   payment:
     public-base-url: ${PAYMENT_PUBLIC_BASE_URL:http://localhost:8091}
     webhook-url: ${PAYMENT_WEBHOOK_URL:http://localhost:8090/api/v1/checkout/payment-webhook}
@@ -27,4 +27,4 @@ management:
 logging:
   level:
     root: INFO
-    com.app.bookshop.payment: DEBUG
+    com.app.catalog.payment: DEBUG

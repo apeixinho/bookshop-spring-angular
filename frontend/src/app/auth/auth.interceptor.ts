@@ -4,7 +4,7 @@ import { from, switchMap } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { environment } from '../../environments/environment';
 
-function isBookshopApiUrl(url: string): boolean {
+function isCatalogApiUrl(url: string): boolean {
   try {
     const api = new URL(environment.apiBaseUrl, window.location.origin);
     const target = new URL(url, window.location.origin);
@@ -16,7 +16,7 @@ function isBookshopApiUrl(url: string): boolean {
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
-  if (!isBookshopApiUrl(req.url)) {
+  if (!isCatalogApiUrl(req.url)) {
     return next(req);
   }
 

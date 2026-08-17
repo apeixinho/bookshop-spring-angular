@@ -11,15 +11,15 @@ The luv2shop reference backend has no Spring Security. We need an in-repo identi
 ## Decision
 
 1. Run a **Spring Authorization Server** as `auth-server` (port 9000).
-2. Configure the bookshop **backend** as an **OAuth2 Resource Server** validating JWTs via the issuer JWKS.
-3. Register a public SPA client `bookshop-spa` using Authorization Code + PKCE.
-4. Issue JWTs (RS256) with audience `bookshop-api` and scopes `openid`, `profile`, `bookshop.read`, `bookshop.write`.
+2. Configure the catalog **backend** as an **OAuth2 Resource Server** validating JWTs via the issuer JWKS.
+3. Register a public SPA client `catalog-spa` using Authorization Code + PKCE.
+4. Issue JWTs (RS256) with audience `catalog-api` and scopes `openid`, `profile`, `catalog.read`, `catalog.write`.
 5. **Access policy** (backend `SecurityFilterChain`):
    - **Permit anonymous:** catalog (products/categories), countries/states (geo), currency rates (`GET /api/v1/currency/**`), OpenAPI/Swagger UI, and `/actuator/health` (probes) for Docker healthchecks.
-   - **Require Bearer JWT + `bookshop.write`:** shopper checkout APIs under `/api/v1/checkout/**`, notably `POST /api/v1/checkout/purchase`.
-   - **Permit without JWT (shared secret):** `POST /api/v1/checkout/payment-webhook` — called by `payment-service` with header `X-Payment-Secret` (not a browser JWT). Hosted checkout pages on `payment-service` are session-token URLs and do not use the bookshop IdP.
-6. Demo users are seeded for local/dev (e.g. `user` / `password`); staging uses JDBC-backed users in MariaDB `bookshop_auth`.
-7. Access tokens include audience `bookshop-api`; the resource server validates `jwt.audiences`.
+   - **Require Bearer JWT + `catalog.write`:** shopper checkout APIs under `/api/v1/checkout/**`, notably `POST /api/v1/checkout/purchase`.
+   - **Permit without JWT (shared secret):** `POST /api/v1/checkout/payment-webhook` — called by `payment-service` with header `X-Payment-Secret` (not a browser JWT). Hosted checkout pages on `payment-service` are session-token URLs and do not use the catalog IdP.
+6. Demo users are seeded for local/dev (e.g. `user` / `password`); staging uses JDBC-backed users in MariaDB `catalog_auth`.
+7. Access tokens include audience `catalog-api`; the resource server validates `jwt.audiences`.
 8. SPA keeps the access token in memory and renews via `refresh_token` stored in `sessionStorage` (no silent-renew iframe / `silent-renew.html`).
 
 ## Consequences
@@ -28,7 +28,7 @@ The luv2shop reference backend has no Spring Security. We need an in-repo identi
 - Payment completion is independent of the SPA session: the mock payment service redirects the browser and notifies the API via a signed webhook.
 - Backend and auth-server share a fixed issuer/client/audience contract so they can be developed in parallel.
 - Compose networking uses service hostname `auth-server` for server-to-server JWKS; browsers use `localhost:9000`.
-- Staging Compose mounts `deploy/mariadb/init` so `bookshop_auth` exists beside `bookshop_db`.
+- Staging Compose mounts `deploy/mariadb/init` so `catalog_auth` exists beside `catalog_db`.
 
 ## References
 
