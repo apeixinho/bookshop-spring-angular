@@ -1,6 +1,12 @@
 # Bookshop payment-service (mock hosted checkout)
 
+[![Payment Service CI](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/payment-service.yml/badge.svg)](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/payment-service.yml)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4-6DB33F?logo=springboot&logoColor=white)
+![Java](https://img.shields.io/badge/Java-21-007396?logo=openjdk&logoColor=white)
+
 Mock hosted checkout (Stripe-like redirect) for the Bookshop monorepo. Not an IdP: the browser opens a session URL; bookshop APIs still use JWT for purchase.
+
+> This service remains on Spring Boot 3.4 (no dependency-upgrade PR yet); the other JVM services are on Spring Boot 4.1.
 
 ## Flow
 

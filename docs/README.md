@@ -1,5 +1,10 @@
 # Documentation index
 
+[![Frontend CI](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/frontend.yml/badge.svg)](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/frontend.yml)
+[![Backend CI](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/backend.yml/badge.svg)](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/backend.yml)
+[![Auth Server CI](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/auth-server.yml/badge.svg)](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/auth-server.yml)
+[![Payment Service CI](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/payment-service.yml/badge.svg)](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/payment-service.yml)
+
 | Document | What it covers |
 |----------|----------------|
 | [OAuth2 access policy](oauth2-access-policy.md) | Authorization Server + resource-server decision; public catalog vs JWT checkout vs payment webhook |

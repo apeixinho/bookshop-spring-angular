@@ -1,6 +1,11 @@
 # Bookshop auth-server (OAuth2 Authorization Server)
 
-Spring Authorization Server (Boot 3.4) issuing JWTs for the Bookshop SPA and API.
+[![Auth Server CI](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/auth-server.yml/badge.svg)](https://github.com/apeixinho/bookshop-spring-angular/actions/workflows/auth-server.yml)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1-6DB33F?logo=springboot&logoColor=white)
+![Spring Security](https://img.shields.io/badge/Spring%20Security-7-6DB33F?logo=springsecurity&logoColor=white)
+![Java](https://img.shields.io/badge/Java-21-007396?logo=openjdk&logoColor=white)
+
+Spring Authorization Server 7.1 (Spring Boot 4.1 / Spring Security 7) issuing JWTs for the Bookshop SPA and API.
 
 ## Profiles
 
