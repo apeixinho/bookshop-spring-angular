@@ -20,7 +20,7 @@ Greenfield monorepo: Angular 22 storefront, Spring Boot 4.1 resource server, and
 | `frontend/` | Angular 22 SPA (signals, PKCE + refresh, locale/FX) |
 | `backend/` | Catalog API — Spring Boot 4.1 (OAuth2 resource server, Flyway, translation tables) |
 | `auth-server/` | Spring Authorization Server — Spring Boot 4.1 / Spring Security 7 (issuer `http://localhost:9000`) |
-| `payment-service/` | Mock hosted checkout (port `8091`; webhook finalizes orders) |
+| `payment-service/` | Mock hosted checkout — Spring Boot 4.1 (port `8091`; webhook finalizes orders) |
 | `compose.dev.yml` | Local stack (H2, in-memory auth users) |
 | `compose.staging.yml` | Staging-like stack (MariaDB for API + auth) |
 | `docs/` | OAuth2 access policy, environments, OpenAPI |
