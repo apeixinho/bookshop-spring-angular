@@ -2,21 +2,26 @@ version: 2
 updates:
   - package-ecosystem: npm
     directory: /frontend
+    target-branch: "dev"
     schedule:
       interval: weekly
   - package-ecosystem: maven
     directory: /backend
+    target-branch: "dev"
     schedule:
       interval: weekly
   - package-ecosystem: maven
     directory: /auth-server
+    target-branch: "dev"
     schedule:
       interval: weekly
   - package-ecosystem: maven
     directory: /payment-service
+    target-branch: "dev"
     schedule:
       interval: weekly
   - package-ecosystem: github-actions
     directory: /
+    target-branch: "dev"
     schedule:
       interval: weekly
